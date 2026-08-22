@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "tsx scripts/run-tests.ts",
+    "test:routes": "tsx scripts/test-routes.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
@@ -28,6 +30,7 @@
     "eslint-config-next": "14.2.24",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.23.12",
     "typescript": "^5.7.3"
   }
 }
