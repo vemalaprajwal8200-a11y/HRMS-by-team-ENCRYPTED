@@ -13,7 +13,12 @@ export async function updateSession(request: NextRequest) {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   // If Supabase is not configured yet with real credentials, let users navigate pages
-  if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('your-project-id')) {
+  if (
+    !supabaseUrl ||
+    !supabaseAnonKey ||
+    supabaseUrl.includes('your-project-id') ||
+    supabaseAnonKey.includes('your-anon-key')
+  ) {
     return response;
   }
 

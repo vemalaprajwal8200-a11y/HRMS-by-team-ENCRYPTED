@@ -63,6 +63,22 @@ const MOCK_PROFILE: FormattedProfile = {
   updatedAt: '2024-03-15T10:00:00Z',
 };
 
+function getSignupError(error: AuthError, employeeId: string): Error {
+  const message = error.message.toLowerCase();
+
+  if (message.includes('user already registered') || message.includes('already been registered')) {
+    return new Error('An account with this email already exists. Please sign in or use a different email address.');
+  }
+
+  if (message.includes('database error saving new user') || message.includes('duplicate key')) {
+    return new Error(
+      `This employee ID (${employeeId}) may already be registered. Please use a unique employee ID, or contact an administrator if the problem continues.`
+    );
+  }
+
+  return error;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -211,7 +227,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
-        return { error };
+        return { error: getSignupError(error, formData.employeeId.trim().toUpperCase()) };
       }
 
       // Check if email confirmation is required by Supabase
@@ -251,12 +267,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data.user) {
-        // Ensure email is verified if configured
-        if (!data.user.email_confirmed_at && data.user.confirmed_at === null) {
-          // If project requires confirmation
-          return { error: new Error('Please verify your email before signing in.'), unverifiedEmail: true };
-        }
-
         // Fetch user's profile to retrieve role
         const { data: userProfile } = await supabase
           .from('profiles')

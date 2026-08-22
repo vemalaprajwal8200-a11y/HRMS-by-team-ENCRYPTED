@@ -92,9 +92,12 @@ export function SignupForm() {
         return;
       }
 
-      // Success: redirect to verify-email holding page
-      const encodedEmail = encodeURIComponent(formData.email.trim());
-      router.push(`/verify-email?email=${encodedEmail}`);
+      if (result.unconfirmedUser) {
+        const encodedEmail = encodeURIComponent(formData.email.trim());
+        router.push(`/verify-email?email=${encodedEmail}`);
+      } else {
+        router.push(formData.role === 'admin' ? '/dashboard/admin' : '/dashboard/employee');
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'An unexpected error occurred during signup';
       setErrors({ general: message });

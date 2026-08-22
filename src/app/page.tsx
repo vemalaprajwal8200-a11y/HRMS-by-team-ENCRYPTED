@@ -3,10 +3,22 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { ArrowRight, ShieldCheck, Zap, Users, Sparkles, Building2 } from 'lucide-react';
+import { motion, type Variants } from 'framer-motion';
+import { ArrowRight, ShieldCheck, Zap, Users, Building2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
+
+const easeOut = [0.22, 1, 0.36, 1] as const;
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 24 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: easeOut } },
+};
+
+const stagger: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.09 } },
+};
 
 export default function HomePage() {
   const { user, role, isLoading } = useAuth();
@@ -23,27 +35,27 @@ export default function HomePage() {
   }, [user, role, isLoading, router]);
 
   return (
-    <div className="min-h-screen bg-surface-50 flex flex-col justify-between">
-      {/* Top Header */}
-      <header className="border-b border-surface-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm shadow-brand-500/20">
-              <Building2 className="w-5 h-5" />
-            </div>
-            <span className="font-bold text-lg tracking-tight text-surface-900">
-              Dayflow<span className="text-brand-600">.</span>
+    <main className="min-h-screen bg-neutral-50 font-sans text-neutral-900">
+      {/* ===================== HEADER ===================== */}
+      <header className="sticky top-0 z-40 border-b border-neutral-900/80 bg-neutral-950/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="inline-flex items-center space-x-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white shadow-glow">
+              <Building2 className="h-5 w-5" />
             </span>
-          </div>
+            <span className="text-lg font-extrabold tracking-tight text-neutral-50">
+              Dayflow<span className="text-brand-500">.</span>
+            </span>
+          </Link>
 
           <div className="flex items-center space-x-3">
             <Link href="/signin">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="text-neutral-300 hover:bg-neutral-900 hover:text-white">
                 Sign In
               </Button>
             </Link>
             <Link href="/signup">
-              <Button variant="primary" size="sm" rightIcon={<ArrowRight className="w-4 h-4" />}>
+              <Button variant="primary" size="sm" className="hover:scale-[1.02]">
                 Get Started
               </Button>
             </Link>
@@ -51,107 +63,231 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 flex flex-col items-center justify-center text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-semibold mb-8 shadow-subtle"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-brand-600" />
-          <span>Odoo x NMIT Hackathon 2026</span>
-        </motion.div>
+      {/* ===================== HERO (DARK) ===================== */}
+      <section className="relative overflow-hidden bg-neutral-950 text-neutral-100">
+        {/* subtle brand glow */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-40 left-1/2 h-[480px] w-[820px] -translate-x-1/2 rounded-full bg-brand-500/10 blur-[120px]"
+        />
+        <div className="relative mx-auto max-w-5xl px-4 py-24 sm:py-28 lg:py-36 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: easeOut }}
+            className="mb-8 inline-flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-900/60 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-neutral-400"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+            Odoo x NMIT Hackathon 2026
+          </motion.div>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="text-4xl sm:text-6xl font-bold tracking-tight text-surface-900 max-w-3xl leading-[1.15]"
-        >
-          Human resource management, <br />
-          <span className="text-brand-600">reimagined for clarity.</span>
-        </motion.h1>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.05, ease: easeOut }}
+            className="mx-auto max-w-3xl text-5xl font-extrabold leading-[1.05] tracking-tight text-neutral-50 sm:text-6xl lg:text-7xl"
+          >
+            Human resource management,{' '}
+            <span className="text-neutral-400">reimagined for clarity.</span>
+          </motion.h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className="mt-6 text-base sm:text-lg text-surface-600 max-w-2xl font-normal leading-relaxed"
-        >
-          Dayflow streamlines employee operations, authenticated role-based dashboards, and
-          verified team profiles with modern performance and security.
-        </motion.p>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.15, ease: easeOut }}
+            className="mx-auto mt-6 max-w-2xl text-base font-normal leading-relaxed text-neutral-400 sm:text-lg"
+          >
+            Dayflow streamlines employee operations, authenticated role-based dashboards, and
+            verified team profiles with modern performance and security.
+          </motion.p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-          className="mt-10 flex flex-col sm:flex-row items-center gap-4"
-        >
-          <Link href="/signup">
-            <Button size="lg" variant="primary" rightIcon={<ArrowRight className="w-4 h-4" />}>
-              Create Employee / Admin Account
-            </Button>
-          </Link>
-          <Link href="/signin">
-            <Button size="lg" variant="outline">
-              Sign In to Portal
-            </Button>
-          </Link>
-        </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.25, ease: easeOut }}
+            className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
+          >
+            <Link href="/signup">
+              <Button
+                size="lg"
+                variant="primary"
+                rightIcon={<ArrowRight className="h-4 w-4" />}
+                className="hover:scale-[1.02]"
+              >
+                Create Employee / Admin Account
+              </Button>
+            </Link>
+            <Link href="/signin">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-neutral-800 bg-transparent text-neutral-100 hover:bg-neutral-900 hover:scale-[1.02]"
+              >
+                Sign In to Portal
+              </Button>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
 
-        {/* Feature Cards Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-left"
-        >
-          <div className="p-6 rounded-2xl border border-surface-200/90 bg-white shadow-card">
-            <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
-              <ShieldCheck className="w-5 h-5" />
+      {/* ===================== FEATURES (LIGHT) ===================== */}
+      <section className="bg-neutral-50 py-24 sm:py-28 lg:py-32">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: '-80px' }}
+            className="mb-12 flex items-center gap-3"
+          >
+            <motion.span variants={fadeUp} className="font-mono text-xs font-semibold tracking-widest text-brand-600">
+              (01)
+            </motion.span>
+            <motion.span variants={fadeUp} className="h-px w-8 bg-neutral-300" />
+            <motion.span
+              variants={fadeUp}
+              className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500"
+            >
+              Platform capabilities
+            </motion.span>
+          </motion.div>
+
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: '-80px' }}
+            className="grid grid-cols-1 gap-6 md:grid-cols-3"
+          >
+            {[
+              {
+                n: '01',
+                title: 'Role-Based Security',
+                desc: 'Strict Postgres Row Level Security and Next.js middleware guards for Employee and Admin workspaces.',
+                icon: ShieldCheck,
+              },
+              {
+                n: '02',
+                title: 'Unified Team Profiles',
+                desc: 'Centralized personal records, job designations, salary structures, and document verification.',
+                icon: Users,
+              },
+              {
+                n: '03',
+                title: 'Lightning Fast & Modern',
+                desc: 'Built on Next.js 14 App Router and Tailwind CSS with smooth Framer Motion micro-interactions.',
+                icon: Zap,
+              },
+            ].map((f) => {
+              const Icon = f.icon;
+              return (
+                <motion.div
+                  key={f.n}
+                  variants={fadeUp}
+                  whileHover={{ y: -6 }}
+                  transition={{ duration: 0.25, ease: easeOut }}
+                  className="group rounded-2xl border border-neutral-200 bg-white p-6 shadow-card transition-all duration-300 hover:shadow-elevated"
+                >
+                  <div className="mb-5 flex items-center justify-between">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-600 group-hover:text-white">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <span className="font-mono text-xs font-semibold tracking-widest text-neutral-300">
+                      {f.n}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-semibold tracking-tight text-neutral-900">{f.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-neutral-500">{f.desc}</p>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ===================== FOOTER (DARK) ===================== */}
+      <footer className="bg-neutral-950 text-neutral-100">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          {/* Closing CTA */}
+          <div className="flex flex-col gap-8 border-b border-neutral-900 pb-16 pt-20 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div className="mb-4 flex items-center gap-3">
+                <span className="font-mono text-xs font-semibold tracking-widest text-brand-600">(02)</span>
+                <span className="h-px w-8 bg-neutral-800" />
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
+                  Get started
+                </span>
+              </div>
+              <h2 className="max-w-xl text-3xl font-extrabold leading-tight tracking-tight text-neutral-50 sm:text-4xl">
+                Ready to reimagine human resource management?
+              </h2>
             </div>
-            <h3 className="text-base font-semibold text-surface-900 mb-1">
-              Role-Based Security
-            </h3>
-            <p className="text-xs text-surface-500 leading-relaxed">
-              Strict Postgres Row Level Security and Next.js middleware guards for Employee and Admin workspaces.
-            </p>
+            <div className="flex shrink-0 items-center gap-3">
+              <Link href="/signup">
+                <Button size="lg" variant="primary" rightIcon={<ArrowRight className="h-4 w-4" />} className="hover:scale-[1.02]">
+                  Get Started
+                </Button>
+              </Link>
+              <Link href="/signin">
+                <Button size="lg" variant="ghost" className="text-neutral-300 hover:bg-neutral-900 hover:text-white">
+                  Sign In
+                </Button>
+              </Link>
+            </div>
           </div>
 
-          <div className="p-6 rounded-2xl border border-surface-200/90 bg-white shadow-card">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
-              <Users className="w-5 h-5" />
+          {/* Grouped links */}
+          <div className="grid grid-cols-2 gap-8 py-12 md:grid-cols-4">
+            <div>
+              <Link href="/" className="inline-flex items-center space-x-2.5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white">
+                  <Building2 className="h-4 w-4" />
+                </span>
+                <span className="text-base font-extrabold tracking-tight text-neutral-50">
+                  Dayflow<span className="text-brand-500">.</span>
+                </span>
+              </Link>
+              <p className="mt-3 max-w-[14rem] text-xs leading-relaxed text-neutral-500">
+                Modern human resource management, reimagined for clarity.
+              </p>
             </div>
-            <h3 className="text-base font-semibold text-surface-900 mb-1">
-              Unified Team Profiles
-            </h3>
-            <p className="text-xs text-surface-500 leading-relaxed">
-              Centralized personal records, job designations, salary structures, and document verification.
-            </p>
+
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-widest text-neutral-400">Product</h4>
+              <ul className="mt-4 space-y-2.5 text-sm text-neutral-500">
+                <li><Link href="#" className="transition-colors hover:text-neutral-100">Attendance</Link></li>
+                <li><Link href="#" className="transition-colors hover:text-neutral-100">Leave</Link></li>
+                <li><Link href="#" className="transition-colors hover:text-neutral-100">Profiles</Link></li>
+                <li><Link href="#" className="transition-colors hover:text-neutral-100">Payroll</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-widest text-neutral-400">Company</h4>
+              <ul className="mt-4 space-y-2.5 text-sm text-neutral-500">
+                <li><Link href="#" className="transition-colors hover:text-neutral-100">About</Link></li>
+                <li><Link href="#" className="transition-colors hover:text-neutral-100">Careers</Link></li>
+                <li><Link href="#" className="transition-colors hover:text-neutral-100">Contact</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-widest text-neutral-400">Resources</h4>
+              <ul className="mt-4 space-y-2.5 text-sm text-neutral-500">
+                <li><Link href="#" className="transition-colors hover:text-neutral-100">Documentation</Link></li>
+                <li><Link href="#" className="transition-colors hover:text-neutral-100">Support</Link></li>
+                <li><Link href="#" className="transition-colors hover:text-neutral-100">Changelog</Link></li>
+              </ul>
+            </div>
           </div>
 
-          <div className="p-6 rounded-2xl border border-surface-200/90 bg-white shadow-card">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4">
-              <Zap className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-semibold text-surface-900 mb-1">
-              Lightning Fast & Modern
-            </h3>
-            <p className="text-xs text-surface-500 leading-relaxed">
-              Built on Next.js 14 App Router and Tailwind CSS with smooth Framer Motion micro-interactions.
-            </p>
+          {/* Bottom bar */}
+          <div className="flex flex-col items-center justify-between gap-3 border-t border-neutral-900 py-8 text-xs text-neutral-500 sm:flex-row">
+            <span>© 2026 Dayflow HRMS</span>
+            <span>Dayflow HRMS • Odoo x NMIT Bangalore Hackathon 2026 • Phase 1 Foundation</span>
           </div>
-        </motion.div>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-surface-200 bg-white py-6">
-        <div className="max-w-7xl mx-auto px-4 text-center text-xs text-surface-500">
-          Dayflow HRMS • Odoo x NMIT Bangalore Hackathon 2026 • Phase 1 Foundation
         </div>
       </footer>
-    </div>
+    </main>
   );
 }
