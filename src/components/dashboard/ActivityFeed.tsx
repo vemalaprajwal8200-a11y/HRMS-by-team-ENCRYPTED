@@ -1,10 +1,38 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Inbox, Sparkles } from 'lucide-react';
 
 export function ActivityFeed() {
+  const [items, setItems] = useState<Array<{ id: string; text: string; date: string }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const [attendanceResponse, leaveResponse, notificationResponse] = await Promise.all([
+        fetch('/api/attendance/me?range=weekly'),
+        fetch('/api/leave-requests'),
+        fetch('/api/notifications/me'),
+      ]);
+      if (!attendanceResponse.ok || !leaveResponse.ok || !notificationResponse.ok) throw new Error('Activity unavailable');
+      const [attendance, leaves, notifications] = await Promise.all([
+        attendanceResponse.json(), leaveResponse.json(), notificationResponse.json(),
+      ]);
+      const nextItems = [
+        ...(attendance.records || []).filter((record: { check_in: string | null }) => record.check_in).slice(0, 3).map((record: { id: string; date: string; check_in: string }) => ({ id: `attendance-${record.id}`, text: `Attendance recorded for ${record.date}`, date: record.date })),
+        ...((leaves.requests || []).slice(0, 2).map((request: { id: string; status: string; type: string; start_date: string }) => ({ id: `leave-${request.id}`, text: `${request.type} leave is ${request.status.toLowerCase()}`, date: request.start_date }))),
+        ...((notifications.notifications || []).slice(0, 3).map((notification: { id: string; message: string; created_at: string }) => ({ id: `notification-${notification.id}`, text: notification.message, date: notification.created_at.slice(0, 10) }))),
+      ];
+      setItems(nextItems.slice(0, 6));
+    } catch { setError(true); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { void load(); }, []);
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -24,7 +52,7 @@ export function ActivityFeed() {
         </span>
       </div>
 
-      <div className="py-12 flex flex-col items-center justify-center text-center">
+      {loading ? <div className="py-12 text-center text-sm text-surface-500">Loading recent activity...</div> : error ? <div className="py-12 text-center"><p className="text-sm text-rose-700">Could not load recent activity.</p><button onClick={() => void load()} className="mt-3 text-xs font-semibold text-brand-600 hover:underline">Retry</button></div> : items.length === 0 ? <div className="py-12 flex flex-col items-center justify-center text-center">
         <div className="w-12 h-12 rounded-2xl bg-surface-50 border border-surface-200/60 flex items-center justify-center text-surface-400 mb-3 shadow-subtle">
           <Inbox className="w-6 h-6" />
         </div>
@@ -39,7 +67,7 @@ export function ActivityFeed() {
           <Sparkles className="w-3 h-3 text-brand-600" />
           <span>All systems operational</span>
         </div>
-      </div>
+      </div> : <div className="divide-y divide-surface-100">{items.map((item) => <div key={item.id} className="flex items-start gap-3 py-4"><div className="mt-1 h-2 w-2 rounded-full bg-brand-500 shrink-0" /><div><p className="text-sm text-surface-800">{item.text}</p><p className="text-xs text-surface-400 mt-1">{item.date}</p></div></div>)}</div>}
     </motion.div>
   );
 }

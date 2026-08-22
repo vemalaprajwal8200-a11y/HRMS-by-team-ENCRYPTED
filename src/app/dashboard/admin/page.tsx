@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Users,
@@ -18,12 +18,32 @@ import { MetricCard } from '@/components/dashboard/MetricCard';
 import { EmployeeTable } from '@/components/dashboard/EmployeeTable';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function AdminDashboardPage() {
   const { profile, user, isLoading: authLoading } = useAuth();
   const { employees, isLoading: employeesLoading } = useEmployees();
 
   const totalEmployees = employees.length;
+  const [pendingApprovals, setPendingApprovals] = useState<number | null>(null);
+  const [attendanceSummary, setAttendanceSummary] = useState<Record<string, number> | null>(null);
+  const [metricsError, setMetricsError] = useState(false);
+  const chartData = attendanceSummary ? Object.entries(attendanceSummary).map(([status, count]) => ({ status: status.replace('_', ' '), count })) : [];
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([
+      fetch('/api/leave-requests?status=PENDING').then((response) => response.ok ? response.json() : Promise.reject()),
+      fetch(`/api/attendance?date=${new Date().toISOString().slice(0, 10)}`).then((response) => response.ok ? response.json() : Promise.reject()),
+    ]).then(([leaveResult, attendanceResult]) => {
+      if (!active) return;
+      setPendingApprovals((leaveResult.requests || []).length);
+      const summary: Record<string, number> = { PRESENT: 0, ABSENT: 0, HALF_DAY: 0, LEAVE: 0 };
+      (attendanceResult.records || []).forEach((record: { status: string }) => { summary[record.status] = (summary[record.status] || 0) + 1; });
+      setAttendanceSummary(summary);
+    }).catch(() => { if (active) setMetricsError(true); });
+    return () => { active = false; };
+  }, []);
 
   if (authLoading) {
     return (
@@ -95,19 +115,19 @@ export default function AdminDashboardPage() {
 
           <MetricCard
             title="Pending Approvals"
-            value="0"
+            value={pendingApprovals === null ? '...' : pendingApprovals}
             description="Leave and profile update requests requiring review"
             icon={FileCheck}
-            trend="All caught up"
-            trendPositive={true}
+            trend={pendingApprovals === 0 ? 'All caught up' : 'Needs review'}
+            trendPositive={pendingApprovals === 0}
             accentColor="amber"
             delayIndex={1}
           />
 
           <MetricCard
             title="Today's Attendance"
-            value="100%"
-            description="Employees checked-in on scheduled shifts"
+            value={attendanceSummary ? Object.values(attendanceSummary).reduce((sum, value) => sum + value, 0) : '...'}
+            description="Today's attendance records by status"
             icon={UserCheck}
             trend="Nominal"
             trendPositive={true}
@@ -115,6 +135,12 @@ export default function AdminDashboardPage() {
             delayIndex={2}
           />
         </div>
+      </div>
+
+      {metricsError && <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">Live metrics could not be loaded. Refresh to try again.</div>}
+      <div className="rounded-2xl border border-surface-200/90 bg-white p-6 shadow-card">
+        <h2 className="text-base font-bold text-surface-900">Today&apos;s status breakdown</h2>
+        {attendanceSummary ? <ResponsiveContainer width="100%" height={220}><BarChart data={chartData}><XAxis dataKey="status" tick={{ fontSize: 11 }} /><YAxis allowDecimals={false} tick={{ fontSize: 11 }} /><Tooltip /><Bar dataKey="count" fill="#5b4bdb" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer> : <div className="mt-5 h-20 animate-pulse rounded-xl bg-surface-100" />}
       </div>
 
       {/* Employee List Table */}

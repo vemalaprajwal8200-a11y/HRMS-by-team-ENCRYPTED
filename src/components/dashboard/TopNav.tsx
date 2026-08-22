@@ -106,7 +106,7 @@ export function TopNav() {
 
           {/* Right User Nav & Sign Out */}
           <div className="hidden sm:flex items-center space-x-4">
-            {!isAdmin && <NotificationBell />}
+            <NotificationBell />
             <div className="flex items-center space-x-3 pr-2">
               <div className="w-8 h-8 rounded-full bg-brand-100 border border-brand-200 text-brand-700 flex items-center justify-center text-xs font-bold shrink-0">
                 {initials}

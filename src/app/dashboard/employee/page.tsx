@@ -77,7 +77,7 @@ export default function EmployeeDashboardPage() {
           <h2 className="text-sm font-semibold uppercase tracking-wider text-surface-500">
             Quick Navigation
           </h2>
-          <span className="text-xs text-surface-400">Phase 1 Foundation</span>
+          <span className="text-xs text-surface-400">Your workspace</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -106,8 +106,8 @@ export default function EmployeeDashboardPage() {
             description="Submit time-off requests, view pending reviews, and check remaining leave balances."
             href="/dashboard/employee/leaves"
             icon={CalendarDays}
-            badge="Phase 4 Stub"
-            badgeVariant="neutral"
+            badge="Live"
+            badgeVariant="success"
             delayIndex={2}
           />
         </div>
