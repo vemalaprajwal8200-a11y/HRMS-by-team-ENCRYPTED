@@ -19,6 +19,29 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  .dark-shell {
+    --background: #11111a;
+    --foreground: #f7f7fb;
+    background: #11111a;
+    color: #f7f7fb;
+  }
+
+  .dark-shell .bg-white { background-color: #1b1b27 !important; }
+  .dark-shell .bg-surface-50 { background-color: #15151f !important; }
+  .dark-shell .bg-surface-100 { background-color: #242432 !important; }
+  .dark-shell .border-surface-100,
+  .dark-shell .border-surface-200,
+  .dark-shell .border-surface-200\/90 { border-color: #303044 !important; }
+  .dark-shell .text-surface-900 { color: #f7f7fb !important; }
+  .dark-shell .text-surface-800 { color: #e7e7ef !important; }
+  .dark-shell .text-surface-700,
+  .dark-shell .text-surface-600 { color: #b8b8ca !important; }
+  .dark-shell .text-surface-500,
+  .dark-shell .text-surface-400 { color: #85859c !important; }
+  .dark-shell input,
+  .dark-shell select,
+  .dark-shell textarea { background-color: #1b1b27; color: #f7f7fb; border-color: #3a3a50; }
 }
 
 /* Custom modern scrollbar */

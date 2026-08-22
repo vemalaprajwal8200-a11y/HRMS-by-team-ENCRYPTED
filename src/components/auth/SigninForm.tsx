@@ -166,7 +166,7 @@ export function SigninForm() {
 
       {/* Email */}
       <Input
-        label="Work Email"
+        label="Login ID / Email"
         type="email"
         placeholder="alex.vance@company.com"
         value={formData.email}
@@ -213,7 +213,7 @@ export function SigninForm() {
           isLoading={isSubmitting}
           leftIcon={<LogIn className="w-4 h-4" />}
         >
-          Sign In
+          SIGN IN
         </Button>
       </div>
 

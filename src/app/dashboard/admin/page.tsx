@@ -19,6 +19,7 @@ import { EmployeeTable } from '@/components/dashboard/EmployeeTable';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { CreateEmployee } from '@/components/dashboard/CreateEmployee';
 
 export default function AdminDashboardPage() {
   const { profile, user, isLoading: authLoading } = useAuth();
@@ -154,6 +155,7 @@ export default function AdminDashboardPage() {
               View employee records, department assignments, and access levels
             </p>
           </div>
+          <CreateEmployee onCreated={() => window.location.reload()} />
         </div>
 
         <EmployeeTable

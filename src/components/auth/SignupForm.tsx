@@ -3,13 +3,11 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { User, Mail, Lock, Shield, BadgeCheck, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Lock, Shield, AlertCircle, CheckCircle2, Phone, Building2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { SignupFormData, SignupFormErrors } from '@/types/auth';
-import { UserRole } from '@/types/database';
 import { isValidPassword } from '@/lib/auth/password';
 
 export function SignupForm() {
@@ -17,12 +15,14 @@ export function SignupForm() {
   const { signUp, isConfigured } = useAuth();
 
   const [formData, setFormData] = useState<SignupFormData>({
-    employeeId: '',
+    employeeId: 'ADMIN',
+    companyName: '',
     fullName: '',
+    phone: '',
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'employee',
+    role: 'admin',
   });
 
   const [errors, setErrors] = useState<SignupFormErrors>({});
@@ -37,11 +37,11 @@ export function SignupForm() {
   const validate = (): boolean => {
     const newErrors: SignupFormErrors = {};
 
-    if (!formData.employeeId.trim()) {
-      newErrors.employeeId = 'Employee ID is required (e.g. EMP-101)';
-    } else if (formData.employeeId.trim().length < 3) {
-      newErrors.employeeId = 'Employee ID must be at least 3 characters';
+    if (!formData.companyName.trim()) {
+      newErrors.companyName = 'Company name is required';
     }
+
+    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
 
     if (!formData.fullName.trim()) {
       newErrors.fullName = 'Full name is required';
@@ -106,9 +106,9 @@ export function SignupForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate>
       <div>
-        <h2 className="text-xl font-bold text-surface-900">Create an account</h2>
+        <h2 className="text-xl font-bold text-surface-900">Register your company</h2>
         <p className="text-xs text-surface-500 mt-1">
-          Join Dayflow HRMS to access your workspace
+          Company administrators create the workspace. Employees are added by HR after setup.
         </p>
       </div>
 
@@ -129,39 +129,37 @@ export function SignupForm() {
         </div>
       )}
 
-      {/* Employee ID & Role */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Input
-          label="Employee ID"
-          placeholder="e.g. EMP-104"
-          value={formData.employeeId}
+          label="Company Name"
+          placeholder="e.g. Dayflow Labs"
+          value={formData.companyName}
           onChange={(e) => {
-            setFormData({ ...formData, employeeId: e.target.value });
-            if (errors.employeeId) setErrors({ ...errors, employeeId: undefined });
+            setFormData({ ...formData, companyName: e.target.value });
+            if (errors.companyName) setErrors({ ...errors, companyName: undefined });
           }}
-          error={errors.employeeId}
-          leftIcon={<BadgeCheck className="w-4 h-4" />}
+          error={errors.companyName}
+          leftIcon={<Building2 className="w-4 h-4" />}
           required
         />
-
-        <Select
-          label="Role"
-          value={formData.role}
+        <Input
+          label="Phone"
+          type="tel"
+          placeholder="+91 98765 43210"
+          value={formData.phone}
           onChange={(e) => {
-            setFormData({ ...formData, role: e.target.value as UserRole });
-            if (errors.role) setErrors({ ...errors, role: undefined });
+            setFormData({ ...formData, phone: e.target.value });
+            if (errors.phone) setErrors({ ...errors, phone: undefined });
           }}
-          error={errors.role}
-          options={[
-            { label: 'Employee', value: 'employee' },
-            { label: 'HR Administrator', value: 'admin' },
-          ]}
+          error={errors.phone}
+          leftIcon={<Phone className="w-4 h-4" />}
+          required
         />
       </div>
 
       {/* Full Name */}
       <Input
-        label="Full Name"
+        label="Admin Name"
         placeholder="e.g. Alex Vance"
         value={formData.fullName}
         onChange={(e) => {
