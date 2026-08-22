@@ -39,6 +39,7 @@ export function TopNav() {
     ? [
         { label: 'Admin Overview', href: '/dashboard/admin', icon: LayoutDashboard },
         { label: 'Team Directory', href: '/dashboard/admin#employees', icon: Users },
+        { label: 'Attendance', href: '/dashboard/admin/attendance', icon: CalendarCheck },
       ]
     : [
         { label: 'Dashboard', href: '/dashboard/employee', icon: LayoutDashboard },

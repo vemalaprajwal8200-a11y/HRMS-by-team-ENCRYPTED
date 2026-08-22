@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { formatCurrency, formatDate, getInitials, cn } from '../src/lib/utils';
 import { formatProfileRow, ProfileRow } from '../src/types/profile';
+import { deriveAttendanceStatus } from '../src/lib/attendance/status';
 
 // Auto-load .env.local if running standalone script
 const envPath = path.resolve(process.cwd(), '.env.local');
@@ -169,6 +170,11 @@ assert(validateEmpId('EMP-101'), 'Accept valid employee ID');
 assert(!validateEmpId(''), 'Reject empty employee ID');
 assert(!validateEmpId('  '), 'Reject whitespace-only employee ID');
 assert(!validateEmpId('E1'), 'Reject employee ID < 3 chars');
+
+const normalCheckIn = '2026-08-22T09:00:00.000Z';
+assert(deriveAttendanceStatus({ check_in: normalCheckIn, check_out: '2026-08-22T17:00:00.000Z', status: 'PRESENT', source: 'AUTO' }) === 'PRESENT', 'Derive present after normal check-in/out');
+assert(deriveAttendanceStatus({ check_in: normalCheckIn, check_out: null, status: 'PRESENT', source: 'AUTO' }) === 'HALF_DAY', 'Derive half day when checkout is missing');
+assert(deriveAttendanceStatus({ check_in: normalCheckIn, check_out: '2026-08-22T17:00:00.000Z', status: 'LEAVE', source: 'LEAVE_SYNC' }) === 'LEAVE', 'Preserve leave-synced status');
 
 // -----------------------------------------------------------------------------
 // 4. SUPABASE CONFIGURATION DETECTION

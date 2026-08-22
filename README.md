@@ -29,3 +29,14 @@ Sign up with an employee ID, email, role, and a password containing at least 8 c
 Deploy this Next.js app to Vercel, add the same Supabase environment variables, and set the Supabase Site URL and redirect allow-list to the Vercel URL. The live URL is deployment-specific and should be recorded here after deployment:
 
 `Pending deployment`
+
+## Attendance Phase 3
+
+Apply `supabase/migrations/0002_attendance_phase3.sql` after the Phase 1 migration. Employees can use `/employee/attendance` to check in/out and review a seven-day table. Admins can use `/admin/attendance` for date and department-filtered oversight.
+
+Verification notes:
+
+- A normal check-in followed by check-out derives `PRESENT`; late or incomplete days derive `HALF_DAY`.
+- `deriveAttendanceStatus` is exported from `src/lib/attendance/status.ts` and returns an existing `LEAVE` status unchanged when `source` is `LEAVE_SYNC`.
+- `GET /api/attendance/me` always filters by the authenticated Supabase user ID, so an employee cannot fetch another employee&apos;s records by changing request parameters.
+- Missing daily/weekly rows are returned as lazy `ABSENT` records without inserting anything into the database.

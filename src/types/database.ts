@@ -7,6 +7,8 @@ export type Json =
   | Json[];
 
 export type UserRole = 'employee' | 'admin';
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'LEAVE';
+export type AttendanceSource = 'AUTO' | 'LEAVE_SYNC';
 
 export interface Database {
   public: {
@@ -77,7 +79,8 @@ export interface Database {
           date: string;
           check_in: string | null;
           check_out: string | null;
-          status: 'present' | 'absent' | 'half-day' | 'leave';
+          status: AttendanceStatus;
+          source: AttendanceSource;
           created_at: string;
         };
         Insert: {
@@ -86,7 +89,8 @@ export interface Database {
           date?: string;
           check_in?: string | null;
           check_out?: string | null;
-          status?: 'present' | 'absent' | 'half-day' | 'leave';
+          status?: AttendanceStatus;
+          source?: AttendanceSource;
           created_at?: string;
         };
         Update: {
@@ -95,7 +99,8 @@ export interface Database {
           date?: string;
           check_in?: string | null;
           check_out?: string | null;
-          status?: 'present' | 'absent' | 'half-day' | 'leave';
+          status?: AttendanceStatus;
+          source?: AttendanceSource;
           created_at?: string;
         };
       };

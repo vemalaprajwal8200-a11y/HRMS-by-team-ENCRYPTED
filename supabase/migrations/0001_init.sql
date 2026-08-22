@@ -51,8 +51,10 @@ create table if not exists public.attendance (
     date date not null default current_date,
     check_in timestamptz,
     check_out timestamptz,
-    status text check (status in ('present', 'absent', 'half-day', 'leave')) default 'present',
+    status text check (status in ('PRESENT', 'ABSENT', 'HALF_DAY', 'LEAVE')) default 'ABSENT',
+    source text not null check (source in ('AUTO', 'LEAVE_SYNC')) default 'AUTO',
     created_at timestamptz not null default now()
+    ,constraint attendance_user_date_key unique (user_id, date)
 );
 
 -- ==============================================================================

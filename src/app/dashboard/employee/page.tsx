@@ -96,8 +96,8 @@ export default function EmployeeDashboardPage() {
             description="Check-in/check-out logs, time-tracking records, and monthly attendance summary."
             href="/dashboard/employee/attendance"
             icon={CalendarCheck}
-            badge="Phase 3 Stub"
-            badgeVariant="neutral"
+            badge="Live"
+            badgeVariant="success"
             delayIndex={1}
           />
 
