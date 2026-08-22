@@ -108,37 +108,64 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
-          type: 'paid' | 'sick' | 'unpaid' | 'casual' | 'maternity' | 'paternity';
+          type: 'paid' | 'sick' | 'unpaid';
           start_date: string;
           end_date: string;
           remarks: string | null;
           status: 'pending' | 'approved' | 'rejected';
           reviewed_by: string | null;
-          comments: string | null;
+          admin_comment: string | null;
+          reviewed_at: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
-          type: 'paid' | 'sick' | 'unpaid' | 'casual' | 'maternity' | 'paternity';
+          type: 'paid' | 'sick' | 'unpaid';
           start_date: string;
           end_date: string;
           remarks?: string | null;
           status?: 'pending' | 'approved' | 'rejected';
           reviewed_by?: string | null;
-          comments?: string | null;
+          admin_comment?: string | null;
+          reviewed_at?: string | null;
           created_at?: string;
         };
         Update: {
           id?: string;
           user_id?: string;
-          type?: 'paid' | 'sick' | 'unpaid' | 'casual' | 'maternity' | 'paternity';
+          type?: 'paid' | 'sick' | 'unpaid';
           start_date?: string;
           end_date?: string;
           remarks?: string | null;
           status?: 'pending' | 'approved' | 'rejected';
           reviewed_by?: string | null;
-          comments?: string | null;
+          admin_comment?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          message: string;
+          read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          message: string;
+          read?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          message?: string;
+          read?: boolean;
           created_at?: string;
         };
         Relationships: [];
@@ -181,6 +208,28 @@ export interface Database {
       };
     };
     Views: {};
-    Functions: {};
+    Functions: {
+      apply_leave_decision: {
+        Args: {
+          p_request_id: string;
+          p_admin_id: string;
+          p_status: string;
+          p_admin_comment: string | null;
+        };
+        Returns: {
+          id: string;
+          user_id: string;
+          type: 'paid' | 'sick' | 'unpaid';
+          start_date: string;
+          end_date: string;
+          remarks: string | null;
+          status: 'pending' | 'approved' | 'rejected';
+          reviewed_by: string | null;
+          admin_comment: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+        };
+      };
+    };
   };
 }

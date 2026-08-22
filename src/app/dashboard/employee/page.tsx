@@ -106,8 +106,8 @@ export default function EmployeeDashboardPage() {
             description="Submit time-off requests, view pending reviews, and check remaining leave balances."
             href="/dashboard/employee/leaves"
             icon={CalendarDays}
-            badge="Phase 4 Stub"
-            badgeVariant="neutral"
+            badge="Live in Phase 4"
+            badgeVariant="success"
             delayIndex={2}
           />
         </div>

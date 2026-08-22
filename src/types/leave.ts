@@ -1,6 +1,6 @@
-// Phase 4 Type Stub: Leave Requests & Approvals
-export type LeaveType = 'paid' | 'sick' | 'unpaid' | 'casual' | 'maternity' | 'paternity';
-export type LeaveStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+// Phase 4: Leave Requests & Approvals domain types
+export type LeaveType = 'paid' | 'sick' | 'unpaid';
+export type LeaveStatus = 'pending' | 'approved' | 'rejected';
 
 export interface LeaveRequest {
   id: string;
@@ -8,17 +8,28 @@ export interface LeaveRequest {
   type: LeaveType;
   startDate: string; // YYYY-MM-DD
   endDate: string; // YYYY-MM-DD
-  totalDays: number;
-  remarks?: string;
+  remarks?: string | null;
   status: LeaveStatus;
   reviewedBy?: string | null;
-  reviewedByName?: string | null;
-  comments?: string | null;
+  adminComment?: string | null;
+  reviewedAt?: string | null;
+  createdAt: string;
+  // Resolved employee name when returned from the admin endpoint.
+  employeeName?: string | null;
+  employeeId?: string | null;
+  department?: string | null;
+}
+
+export interface NotificationItem {
+  id: string;
+  userId: string;
+  message: string;
+  read: boolean;
   createdAt: string;
 }
 
 export interface LeaveBalance {
   paid: number;
   sick: number;
-  casual: number;
+  unpaid: number;
 }
