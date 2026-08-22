@@ -2,7 +2,9 @@ import { UserRole } from './database';
 
 export interface SignupFormData {
   employeeId: string;
+  companyName: string;
   fullName: string;
+  phone: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -11,7 +13,9 @@ export interface SignupFormData {
 
 export interface SignupFormErrors {
   employeeId?: string;
+  companyName?: string;
   fullName?: string;
+  phone?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;

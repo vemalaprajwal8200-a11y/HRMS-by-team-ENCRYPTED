@@ -98,7 +98,7 @@ export function useLeaves() {
           start_date: params.startDate,
           end_date: params.endDate,
           remarks: params.remarks?.trim() || null,
-          status: 'pending',
+          status: 'PENDING',
         })
         .select()
         .single();
@@ -121,15 +121,15 @@ export function useLeaves() {
 
   // Balance calculation (Quota: Casual: 12, Sick: 10, Paid: 15)
   const approvedCasual = leaves
-    .filter((l) => l.type === 'casual' && l.status === 'approved')
+    .filter((l) => l.type === 'UNPAID' && l.status === 'APPROVED')
     .reduce((acc, curr) => acc + curr.totalDays, 0);
 
   const approvedSick = leaves
-    .filter((l) => l.type === 'sick' && l.status === 'approved')
+    .filter((l) => l.type === 'SICK' && l.status === 'APPROVED')
     .reduce((acc, curr) => acc + curr.totalDays, 0);
 
   const approvedPaid = leaves
-    .filter((l) => l.type === 'paid' && l.status === 'approved')
+    .filter((l) => l.type === 'PAID' && l.status === 'APPROVED')
     .reduce((acc, curr) => acc + curr.totalDays, 0);
 
   const balances: LeaveBalance = {
@@ -240,7 +240,7 @@ export function useAllLeaves() {
 
   const reviewLeave = async (
     leaveId: string,
-    action: 'approved' | 'rejected',
+    action: 'APPROVED' | 'REJECTED',
     comments?: string
   ) => {
     if (!user || !configured) return { error: new Error('Unauthorized') };
@@ -275,7 +275,7 @@ export function useAllLeaves() {
     }
   };
 
-  const pendingCount = allLeaves.filter((l) => l.status === 'pending').length;
+  const pendingCount = allLeaves.filter((l) => l.status === 'PENDING').length;
 
   return {
     allLeaves,

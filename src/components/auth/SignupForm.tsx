@@ -6,7 +6,9 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   User,
+  Building2,
   Mail,
+  Phone,
   Lock,
   Shield,
   BadgeCheck,
@@ -51,7 +53,9 @@ export function SignupForm() {
 
   const [formData, setFormData] = useState<SignupFormData>({
     employeeId: '',
+    companyName: '',
     fullName: '',
+    phone: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -80,6 +84,16 @@ export function SignupForm() {
       newErrors.fullName = 'Full name is required';
     } else if (formData.fullName.trim().length < 2) {
       newErrors.fullName = 'Please enter your full name';
+    }
+
+    if (!formData.companyName.trim()) {
+      newErrors.companyName = 'Company name is required';
+    } else if (formData.companyName.trim().length < 2) {
+      newErrors.companyName = 'Please enter your company name';
+    }
+
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Phone number is required';
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -226,6 +240,36 @@ export function SignupForm() {
           }}
           error={errors.fullName}
           leftIcon={<User className="w-4 h-4 text-slate-400" />}
+          required
+        />
+      </motion.div>
+
+      {/* Company & Phone */}
+      <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Input
+          label="Company Name"
+          placeholder="e.g. Acme Inc."
+          value={formData.companyName}
+          onChange={(e) => {
+            setFormData({ ...formData, companyName: e.target.value });
+            if (errors.companyName) setErrors({ ...errors, companyName: undefined });
+          }}
+          error={errors.companyName}
+          leftIcon={<Building2 className="w-4 h-4 text-slate-400" />}
+          required
+        />
+
+        <Input
+          label="Phone Number"
+          type="tel"
+          placeholder="e.g. +1 555 0100"
+          value={formData.phone}
+          onChange={(e) => {
+            setFormData({ ...formData, phone: e.target.value });
+            if (errors.phone) setErrors({ ...errors, phone: undefined });
+          }}
+          error={errors.phone}
+          leftIcon={<Phone className="w-4 h-4 text-slate-400" />}
           required
         />
       </motion.div>

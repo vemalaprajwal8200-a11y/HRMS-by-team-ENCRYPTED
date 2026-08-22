@@ -61,6 +61,7 @@ export function useAttendance() {
             checkIn: row.check_in,
             checkOut: row.check_out,
             status: row.status as AttendanceStatus,
+            source: row.source || 'AUTO',
             workHours,
             createdAt: row.created_at,
           };
@@ -104,7 +105,7 @@ export function useAttendance() {
           user_id: user.id,
           date: todayStr,
           check_in: nowIso,
-          status: 'present',
+          status: 'PRESENT',
         })
         .select()
         .single();
@@ -193,16 +194,16 @@ export function useAttendance() {
   };
 
   // Calculate summary metrics
-  const presentDays = history.filter((h) => h.status === 'present').length;
-  const halfDays = history.filter((h) => h.status === 'half-day').length;
-  const leaveDays = history.filter((h) => h.status === 'leave').length;
+  const presentDays = history.filter((h) => h.status === 'PRESENT').length;
+  const halfDays = history.filter((h) => h.status === 'HALF_DAY').length;
+  const leaveDays = history.filter((h) => h.status === 'LEAVE').length;
   const totalWorkingDays = Math.max(history.length, 1);
   const attendancePercentage =
     Math.round(((presentDays + halfDays * 0.5) / totalWorkingDays) * 100) || 100;
 
   const summary: AttendanceSummary = {
     presentDays,
-    absentDays: history.filter((h) => h.status === 'absent').length,
+    absentDays: history.filter((h) => h.status === 'ABSENT').length,
     halfDays,
     leaveDays,
     totalWorkingDays,

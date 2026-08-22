@@ -53,6 +53,7 @@ export interface FormattedProfile {
   documents: DocumentItem[];
   createdAt: string;
   updatedAt: string;
+  attendanceStatus?: 'PRESENT' | 'ABSENT' | 'LEAVE';
 }
 
 export function formatProfileRow(row: ProfileRow): FormattedProfile {

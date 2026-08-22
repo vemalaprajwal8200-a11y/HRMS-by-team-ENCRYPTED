@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { formatCurrency, formatDate, getInitials, cn } from '../src/lib/utils';
 import { formatProfileRow, ProfileRow } from '../src/types/profile';
+import { deriveAttendanceStatus } from '../src/lib/attendance/status';
 
 // Auto-load .env.local if running standalone script
 const envPath = path.resolve(process.cwd(), '.env.local');
@@ -143,16 +144,16 @@ console.log('\n📦 3. Testing Password & Form Validation Rules');
 const validatePassword = (pwd: string) => {
   const minLen = pwd.length >= 8;
   const hasNum = /\d/.test(pwd);
-  const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd);
-  return minLen && hasNum && hasSpecial;
+  const hasUppercase = /[A-Z]/.test(pwd);
+  return minLen && hasNum && hasUppercase;
 };
 
 // Password criteria checks
 assert(!validatePassword('short1!'), 'Reject password < 8 chars');
 assert(!validatePassword('AllLettersOnly!'), 'Reject password without number');
-assert(!validatePassword('AllLetters12345'), 'Reject password without special character');
-assert(validatePassword('StrongPass123!'), 'Accept valid complex password');
-assert(validatePassword('Hackathon@2026'), 'Accept hackathon theme password');
+assert(!validatePassword('allletters12345'), 'Reject password without uppercase letter');
+assert(validatePassword('StrongPass123'), 'Accept valid password with uppercase and number');
+assert(validatePassword('Hackathon2026'), 'Accept hackathon theme password');
 
 // Email regex checks
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -169,6 +170,11 @@ assert(validateEmpId('EMP-101'), 'Accept valid employee ID');
 assert(!validateEmpId(''), 'Reject empty employee ID');
 assert(!validateEmpId('  '), 'Reject whitespace-only employee ID');
 assert(!validateEmpId('E1'), 'Reject employee ID < 3 chars');
+
+const normalCheckIn = '2026-08-22T09:00:00.000Z';
+assert(deriveAttendanceStatus({ check_in: normalCheckIn, check_out: '2026-08-22T17:00:00.000Z', status: 'PRESENT', source: 'AUTO' }) === 'PRESENT', 'Derive present after normal check-in/out');
+assert(deriveAttendanceStatus({ check_in: normalCheckIn, check_out: null, status: 'PRESENT', source: 'AUTO' }) === 'HALF_DAY', 'Derive half day when checkout is missing');
+assert(deriveAttendanceStatus({ check_in: normalCheckIn, check_out: '2026-08-22T17:00:00.000Z', status: 'LEAVE', source: 'LEAVE_SYNC' }) === 'LEAVE', 'Preserve leave-synced status');
 
 // -----------------------------------------------------------------------------
 // 4. SUPABASE CONFIGURATION DETECTION

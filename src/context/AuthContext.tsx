@@ -197,27 +197,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email.trim(),
-        password: formData.password,
-        options: {
-          data: {
-            employee_id: formData.employeeId.trim().toUpperCase(),
-            full_name: formData.fullName.trim(),
-            role: formData.role,
-          },
-          emailRedirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`,
-        },
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
       });
 
-      if (error) {
-        return { error };
+      const result = (await response.json()) as { error?: string; unconfirmedUser?: boolean };
+      if (!response.ok) {
+        return { error: new Error(result.error || 'Signup failed') };
       }
 
-      // Check if email confirmation is required by Supabase
-      const unconfirmedUser = !data.session && !data.user?.email_confirmed_at;
-
-      return { error: null, unconfirmedUser };
+      return { error: null, unconfirmedUser: result.unconfirmedUser };
     } catch (err: unknown) {
       const error = err instanceof Error ? err : new Error('Signup failed');
       return { error };

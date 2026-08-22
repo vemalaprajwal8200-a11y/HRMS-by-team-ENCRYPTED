@@ -104,7 +104,7 @@ export function AdminAttendanceTracker({
 
                     <td className="py-3.5 px-4 sm:px-6">
                       <Badge
-                        variant={rec.status === 'present' ? 'success' : 'neutral'}
+                        variant={rec.status === 'PRESENT' ? 'success' : 'neutral'}
                         size="sm"
                         className="capitalize"
                       >

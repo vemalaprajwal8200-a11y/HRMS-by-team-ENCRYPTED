@@ -73,6 +73,13 @@ export function useEmployees() {
     }
 
     try {
+      const adminResponse = await fetch('/api/employees');
+      if (adminResponse.ok) {
+        const result = await adminResponse.json();
+        setEmployees((result.employees || []).map((row: any) => ({ ...formatProfileRow(row), attendanceStatus: row.attendance_status })));
+        setIsLoading(false);
+        return;
+      }
       const { data, error: fetchError } = await supabase
         .from('profiles')
         .select('*')

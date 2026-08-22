@@ -67,8 +67,9 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isAuthPage = path.startsWith('/signin') || path.startsWith('/signup') || path.startsWith('/verify-email');
-  const isDashboard = path.startsWith('/dashboard');
-  const isAdminDashboard = path.startsWith('/dashboard/admin');
+  const isDashboard = path.startsWith('/dashboard') || path.startsWith('/employee') || path.startsWith('/admin');
+  const isAdminDashboard = path.startsWith('/dashboard/admin') || path.startsWith('/admin');
+  const isSecurityRoute = path.includes('/profile');
 
   // 1. Unauthenticated users trying to access protected dashboard routes
   if (!user && isDashboard) {
@@ -80,6 +81,13 @@ export async function updateSession(request: NextRequest) {
 
   // 2. Authenticated user logic
   if (user) {
+    const { data: account } = await supabase.from('users').select('must_change_password').eq('id', user.id).maybeSingle();
+    if ((account as { must_change_password?: boolean } | null)?.must_change_password && !isSecurityRoute && !isAuthPage) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/dashboard/employee/profile';
+      url.searchParams.set('tab', 'security');
+      return NextResponse.redirect(url);
+    }
     // If authenticated user tries to visit auth pages (/signin or /signup)
     if (isAuthPage && !path.startsWith('/verify-email')) {
       // Fetch role to redirect to right dashboard

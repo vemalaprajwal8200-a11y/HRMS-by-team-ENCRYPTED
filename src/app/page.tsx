@@ -146,12 +146,6 @@ export default function HomePage() {
         </motion.div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-surface-200 bg-white py-6">
-        <div className="max-w-7xl mx-auto px-4 text-center text-xs text-surface-500">
-          Dayflow HRMS • Odoo x NMIT Bangalore Hackathon 2026 • Phase 1 Foundation
-        </div>
-      </footer>
     </div>
   );
 }

@@ -7,6 +7,11 @@ export type Json =
   | Json[];
 
 export type UserRole = 'employee' | 'admin';
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'LEAVE';
+export type AttendanceSource = 'AUTO' | 'LEAVE_SYNC';
+export type LeaveType = 'PAID' | 'SICK' | 'UNPAID';
+export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type PayrollComponentType = 'FIXED' | 'PERCENTAGE';
 
 export interface Database {
   public: {
@@ -77,7 +82,8 @@ export interface Database {
           date: string;
           check_in: string | null;
           check_out: string | null;
-          status: 'present' | 'absent' | 'half-day' | 'leave';
+          status: AttendanceStatus;
+          source: AttendanceSource;
           created_at: string;
         };
         Insert: {
@@ -86,7 +92,8 @@ export interface Database {
           date?: string;
           check_in?: string | null;
           check_out?: string | null;
-          status?: 'present' | 'absent' | 'half-day' | 'leave';
+          status?: AttendanceStatus;
+          source?: AttendanceSource;
           created_at?: string;
         };
         Update: {
@@ -95,7 +102,8 @@ export interface Database {
           date?: string;
           check_in?: string | null;
           check_out?: string | null;
-          status?: 'present' | 'absent' | 'half-day' | 'leave';
+          status?: AttendanceStatus;
+          source?: AttendanceSource;
           created_at?: string;
         };
       };
@@ -103,11 +111,13 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
-          type: 'paid' | 'sick' | 'unpaid' | 'casual' | 'maternity' | 'paternity';
+          type: LeaveType;
           start_date: string;
           end_date: string;
           remarks: string | null;
-          status: 'pending' | 'approved' | 'rejected';
+          status: LeaveStatus;
+          admin_comment: string | null;
+          reviewed_at: string | null;
           reviewed_by: string | null;
           comments: string | null;
           created_at: string;
@@ -119,7 +129,9 @@ export interface Database {
           start_date: string;
           end_date: string;
           remarks?: string | null;
-          status?: 'pending' | 'approved' | 'rejected';
+          status?: LeaveStatus;
+          admin_comment?: string | null;
+          reviewed_at?: string | null;
           reviewed_by?: string | null;
           comments?: string | null;
           created_at?: string;
@@ -131,7 +143,9 @@ export interface Database {
           start_date?: string;
           end_date?: string;
           remarks?: string | null;
-          status?: 'pending' | 'approved' | 'rejected';
+          status?: LeaveStatus;
+          admin_comment?: string | null;
+          reviewed_at?: string | null;
           reviewed_by?: string | null;
           comments?: string | null;
           created_at?: string;
@@ -141,6 +155,27 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
+          basic_salary: number;
+          allowances: number;
+          deductions: number;
+          updated_at: string;
+          updated_by: string | null;
+          month_wage: number | null;
+          working_days_per_week: number;
+          break_time_hours: number;
+          basic_salary_type: PayrollComponentType;
+          basic_salary_value: number;
+          hra_type: PayrollComponentType;
+          hra_value: number;
+          standard_allowance_type: PayrollComponentType;
+          standard_allowance_value: number;
+          performance_bonus_type: PayrollComponentType;
+          performance_bonus_value: number;
+          leave_travel_allowance_type: PayrollComponentType;
+          leave_travel_allowance_value: number;
+          pf_employee_percent: number;
+          pf_employer_percent: number;
+          professional_tax: number;
           month: string;
           gross_salary: number;
           total_allowances: number;
@@ -152,6 +187,27 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
+          basic_salary?: number;
+          allowances?: number;
+          deductions?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+          month_wage?: number | null;
+          working_days_per_week?: number;
+          break_time_hours?: number;
+          basic_salary_type?: PayrollComponentType;
+          basic_salary_value?: number;
+          hra_type?: PayrollComponentType;
+          hra_value?: number;
+          standard_allowance_type?: PayrollComponentType;
+          standard_allowance_value?: number;
+          performance_bonus_type?: PayrollComponentType;
+          performance_bonus_value?: number;
+          leave_travel_allowance_type?: PayrollComponentType;
+          leave_travel_allowance_value?: number;
+          pf_employee_percent?: number;
+          pf_employer_percent?: number;
+          professional_tax?: number;
           month: string;
           gross_salary: number;
           total_allowances?: number;
@@ -163,6 +219,27 @@ export interface Database {
         Update: {
           id?: string;
           user_id?: string;
+          basic_salary?: number;
+          allowances?: number;
+          deductions?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+          month_wage?: number | null;
+          working_days_per_week?: number;
+          break_time_hours?: number;
+          basic_salary_type?: PayrollComponentType;
+          basic_salary_value?: number;
+          hra_type?: PayrollComponentType;
+          hra_value?: number;
+          standard_allowance_type?: PayrollComponentType;
+          standard_allowance_value?: number;
+          performance_bonus_type?: PayrollComponentType;
+          performance_bonus_value?: number;
+          leave_travel_allowance_type?: PayrollComponentType;
+          leave_travel_allowance_value?: number;
+          pf_employee_percent?: number;
+          pf_employer_percent?: number;
+          professional_tax?: number;
           month?: string;
           gross_salary?: number;
           total_allowances?: number;
@@ -171,6 +248,11 @@ export interface Database {
           status?: 'draft' | 'processed' | 'paid';
           created_at?: string;
         };
+      };
+      leave_balances: {
+        Row: { id: string; user_id: string; leave_type: LeaveType; allocated_days: number; year: number };
+        Insert: { id?: string; user_id: string; leave_type: LeaveType; allocated_days?: number; year: number };
+        Update: { id?: string; user_id?: string; leave_type?: LeaveType; allocated_days?: number; year?: number };
       };
     };
   };

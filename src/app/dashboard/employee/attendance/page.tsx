@@ -268,7 +268,7 @@ export default function AttendancePage() {
                         </td>
                         <td className="py-3.5 px-4 sm:px-6 text-right">
                           <Badge
-                            variant={record.status === 'present' ? 'success' : 'neutral'}
+                            variant={record.status === 'PRESENT' ? 'success' : 'neutral'}
                             size="sm"
                             className="capitalize"
                           >

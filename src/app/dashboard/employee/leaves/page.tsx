@@ -31,7 +31,7 @@ export default function LeavesPage() {
   const { leaves, balances, isLoading, isSubmitting, error, applyLeave } = useLeaves();
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [formType, setFormType] = useState<LeaveType>('casual');
+  const [formType, setFormType] = useState<LeaveType>('UNPAID');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [remarks, setRemarks] = useState('');
@@ -206,9 +206,9 @@ export default function LeavesPage() {
                       <td className="py-3.5 px-4 sm:px-6">
                         <Badge
                           variant={
-                            l.type === 'sick'
+                            l.type === 'SICK'
                               ? 'danger'
-                              : l.type === 'casual'
+                              : l.type === 'UNPAID'
                               ? 'warning'
                               : 'primary'
                           }
@@ -232,17 +232,17 @@ export default function LeavesPage() {
                       </td>
 
                       <td className="py-3.5 px-4">
-                        {l.status === 'approved' && (
+                        {l.status === 'APPROVED' && (
                           <Badge variant="success" size="sm">
                             <CheckCircle2 className="w-3 h-3 mr-1" /> Approved
                           </Badge>
                         )}
-                        {l.status === 'rejected' && (
+                        {l.status === 'REJECTED' && (
                           <Badge variant="danger" size="sm">
                             <XCircle className="w-3 h-3 mr-1" /> Rejected
                           </Badge>
                         )}
-                        {l.status === 'pending' && (
+                        {l.status === 'PENDING' && (
                           <Badge variant="warning" size="sm">
                             <Clock className="w-3 h-3 mr-1" /> Under Review
                           </Badge>
@@ -250,7 +250,7 @@ export default function LeavesPage() {
                       </td>
 
                       <td className="py-3.5 px-4 sm:px-6 text-right text-xs text-surface-500">
-                        {l.comments || (l.status === 'pending' ? 'Pending HR review' : 'No comments')}
+                        {l.adminComment || (l.status === 'PENDING' ? 'Pending HR review' : 'No comments')}
                       </td>
                     </tr>
                   ))}
@@ -308,9 +308,9 @@ export default function LeavesPage() {
                   value={formType}
                   onChange={(e) => setFormType(e.target.value as LeaveType)}
                   options={[
-                    { label: `Casual Leave (${balances.casual} days available)`, value: 'casual' },
-                    { label: `Sick Leave (${balances.sick} days available)`, value: 'sick' },
-                    { label: `Paid / Earned Leave (${balances.paid} days available)`, value: 'paid' },
+                    { label: `Unpaid Leave (${balances.casual} days available)`, value: 'UNPAID' },
+                    { label: `Sick Leave (${balances.sick} days available)`, value: 'SICK' },
+                    { label: `Paid / Earned Leave (${balances.paid} days available)`, value: 'PAID' },
                     { label: 'Unpaid Leave / Loss of Pay', value: 'unpaid' },
                     { label: 'Maternity Leave', value: 'maternity' },
                     { label: 'Paternity Leave', value: 'paternity' },

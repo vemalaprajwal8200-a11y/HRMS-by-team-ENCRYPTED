@@ -32,7 +32,7 @@ export default function EmployeeDashboardPage() {
 
   const isCheckedIn = !!todayRecord && !todayRecord.checkOut;
   const isCompleted = !!todayRecord && !!todayRecord.checkOut;
-  const pendingLeavesCount = leaves.filter((l) => l.status === 'pending').length;
+  const pendingLeavesCount = leaves.filter((l) => l.status === 'PENDING').length;
 
   if (isLoading) {
     return (

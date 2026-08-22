@@ -12,7 +12,7 @@ import { AdminLeaveItem } from '@/hooks/useLeaves';
 interface AdminLeaveReviewProps {
   leaves: AdminLeaveItem[];
   isLoading: boolean;
-  onReview: (id: string, action: 'approved' | 'rejected', comments?: string) => Promise<any>;
+  onReview: (id: string, action: 'APPROVED' | 'REJECTED', comments?: string) => Promise<any>;
   isReviewing: boolean;
 }
 
@@ -26,12 +26,12 @@ export function AdminLeaveReview({
   const [comments, setComments] = useState('');
 
   const handleApprove = (id: string) => {
-    onReview(id, 'approved', 'Approved by HR Administrator');
+    onReview(id, 'APPROVED', 'Approved by HR Administrator');
   };
 
   const handleConfirmReject = async () => {
     if (!rejectingId) return;
-    await onReview(rejectingId, 'rejected', comments || 'Rejected by HR Administrator');
+    await onReview(rejectingId, 'REJECTED', comments || 'Rejected by HR Administrator');
     setRejectingId(null);
     setComments('');
   };
@@ -77,9 +77,9 @@ export function AdminLeaveReview({
                 <td className="py-3.5 px-4">
                   <Badge
                     variant={
-                      leave.type === 'sick'
+                      leave.type === 'SICK'
                         ? 'danger'
-                        : leave.type === 'casual'
+                        : leave.type === 'UNPAID'
                         ? 'warning'
                         : 'primary'
                     }
@@ -104,17 +104,17 @@ export function AdminLeaveReview({
                 </td>
 
                 <td className="py-3.5 px-4">
-                  {leave.status === 'approved' && (
+                  {leave.status === 'APPROVED' && (
                     <Badge variant="success" size="sm">
                       <CheckCircle2 className="w-3 h-3 mr-1" /> Approved
                     </Badge>
                   )}
-                  {leave.status === 'rejected' && (
+                  {leave.status === 'REJECTED' && (
                     <Badge variant="danger" size="sm">
                       <XCircle className="w-3 h-3 mr-1" /> Rejected
                     </Badge>
                   )}
-                  {leave.status === 'pending' && (
+                  {leave.status === 'PENDING' && (
                     <Badge variant="warning" size="sm">
                       <Clock className="w-3 h-3 mr-1" /> Pending
                     </Badge>
@@ -122,7 +122,7 @@ export function AdminLeaveReview({
                 </td>
 
                 <td className="py-3.5 px-4 sm:px-6 text-right">
-                  {leave.status === 'pending' ? (
+                  {leave.status === 'PENDING' ? (
                     <div className="flex items-center justify-end gap-2">
                       <Button
                         size="sm"

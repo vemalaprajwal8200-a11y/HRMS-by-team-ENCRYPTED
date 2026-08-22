@@ -30,7 +30,7 @@ export function ActivityFeed() {
       title: att.checkOut ? `Full shift completed on ${formatDate(att.date)}` : `Checked in on ${formatDate(att.date)}`,
       time: att.checkIn ? new Date(att.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : att.date,
       status: att.checkOut ? `${att.workHours || 0} hrs logged` : 'Active Shift',
-      badgeVariant: att.status === 'present' ? 'success' : 'neutral',
+      badgeVariant: att.status === 'PRESENT' ? 'success' : 'neutral',
       icon: CalendarCheck,
     });
   });
@@ -41,8 +41,8 @@ export function ActivityFeed() {
       type: 'leave',
       title: `${l.type.toUpperCase()} Leave: ${formatDate(l.startDate)} - ${formatDate(l.endDate)}`,
       time: formatDate(l.createdAt),
-      status: l.status === 'approved' ? 'Approved' : l.status === 'rejected' ? 'Rejected' : 'Under Review',
-      badgeVariant: l.status === 'approved' ? 'success' : l.status === 'rejected' ? 'danger' : 'warning',
+      status: l.status === 'APPROVED' ? 'Approved' : l.status === 'REJECTED' ? 'Rejected' : 'Under Review',
+      badgeVariant: l.status === 'APPROVED' ? 'success' : l.status === 'REJECTED' ? 'danger' : 'warning',
       icon: CalendarDays,
     });
   });

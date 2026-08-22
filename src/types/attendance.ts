@@ -1,5 +1,5 @@
-// Phase 3 Type Stub: Attendance Management
-export type AttendanceStatus = 'present' | 'absent' | 'half-day' | 'leave';
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'LEAVE';
+export type AttendanceSource = 'AUTO' | 'LEAVE_SYNC';
 
 export interface AttendanceRecord {
   id: string;
@@ -8,6 +8,7 @@ export interface AttendanceRecord {
   checkIn?: string | null; // ISO timestamp
   checkOut?: string | null; // ISO timestamp
   status: AttendanceStatus;
+  source: AttendanceSource;
   workHours?: number;
   notes?: string;
   createdAt: string;

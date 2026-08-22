@@ -66,7 +66,7 @@ export default function AdminDashboardPage() {
 
   const todayStr = new Date().toISOString().split('T')[0];
   const todayAttendanceList = allAttendance.filter((a) => a.date === todayStr);
-  const todayPresentCount = todayAttendanceList.filter((a) => a.status === 'present' || a.status === 'half-day').length;
+  const todayPresentCount = todayAttendanceList.filter((a) => a.status === 'PRESENT' || a.status === 'HALF_DAY').length;
 
   const handleOpenEdit = (emp: FormattedProfile) => {
     setEditingEmp(emp);
@@ -112,12 +112,12 @@ export default function AdminDashboardPage() {
   };
 
   const handleApproveLeave = async (id: string) => {
-    await reviewLeave(id, 'approved', 'Approved by HR Administrator');
+    await reviewLeave(id, 'APPROVED', 'Approved by HR Administrator');
   };
 
   const handleConfirmReject = async () => {
     if (!rejectingLeaveId) return;
-    await reviewLeave(rejectingLeaveId, 'rejected', rejectComments || 'Rejected by HR Administrator');
+    await reviewLeave(rejectingLeaveId, 'REJECTED', rejectComments || 'Rejected by HR Administrator');
     setRejectingLeaveId(null);
     setRejectComments('');
   };
