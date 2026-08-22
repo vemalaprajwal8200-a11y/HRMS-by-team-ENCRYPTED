@@ -1,10 +1,11 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Building2, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { DodgeButton } from '@/components/DodgeButton';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -78,6 +79,13 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               {children}
             </motion.div>
           </AnimatePresence>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* PLAYFUL DODGE BUTTON MICRO-INTERACTION */}
+        {/* ========================================================================= */}
+        <div className="mt-3.5 flex justify-center overflow-visible">
+          <DodgeButton />
         </div>
 
         {/* ========================================================================= */}
