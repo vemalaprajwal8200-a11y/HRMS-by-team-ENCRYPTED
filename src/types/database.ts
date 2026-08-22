@@ -9,6 +9,8 @@ export type Json =
 export type UserRole = 'employee' | 'admin';
 export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'LEAVE';
 export type AttendanceSource = 'AUTO' | 'LEAVE_SYNC';
+export type LeaveType = 'PAID' | 'SICK' | 'UNPAID';
+export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface Database {
   public: {
@@ -108,11 +110,13 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
-          type: 'paid' | 'sick' | 'unpaid' | 'casual' | 'maternity' | 'paternity';
+          type: LeaveType;
           start_date: string;
           end_date: string;
           remarks: string | null;
-          status: 'pending' | 'approved' | 'rejected';
+          status: LeaveStatus;
+          admin_comment: string | null;
+          reviewed_at: string | null;
           reviewed_by: string | null;
           comments: string | null;
           created_at: string;
@@ -124,7 +128,9 @@ export interface Database {
           start_date: string;
           end_date: string;
           remarks?: string | null;
-          status?: 'pending' | 'approved' | 'rejected';
+          status?: LeaveStatus;
+          admin_comment?: string | null;
+          reviewed_at?: string | null;
           reviewed_by?: string | null;
           comments?: string | null;
           created_at?: string;
@@ -136,7 +142,9 @@ export interface Database {
           start_date?: string;
           end_date?: string;
           remarks?: string | null;
-          status?: 'pending' | 'approved' | 'rejected';
+          status?: LeaveStatus;
+          admin_comment?: string | null;
+          reviewed_at?: string | null;
           reviewed_by?: string | null;
           comments?: string | null;
           created_at?: string;

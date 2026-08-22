@@ -1,49 +1,20 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
-import { CalendarDays, ArrowLeft, Clock } from 'lucide-react';
+import { FormEvent, useEffect, useState } from 'react';
+import { CalendarDays, Send } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 
-export default function LeavesStubPage() {
-  return (
-    <div className="max-w-2xl mx-auto py-12 text-center space-y-6">
-      <div className="mx-auto w-16 h-16 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shadow-subtle">
-        <CalendarDays className="w-8 h-8" />
-      </div>
+type Leave = { id: string; type: 'PAID' | 'SICK' | 'UNPAID'; start_date: string; end_date: string; remarks: string | null; status: 'PENDING' | 'APPROVED' | 'REJECTED'; admin_comment: string | null };
+const badge = (status: Leave['status']) => status === 'APPROVED' ? 'success' : status === 'REJECTED' ? 'danger' : 'warning';
 
-      <div className="space-y-2">
-        <Badge variant="warning" size="md">
-          Phase 4 Module Stub
-        </Badge>
-        <h1 className="text-2xl font-bold tracking-tight text-surface-900">
-          Leave Management & Approvals
-        </h1>
-        <p className="text-sm text-surface-600 max-w-md mx-auto">
-          Time-off applications, multi-tier approval workflows, and leave quotas will be implemented in Phase 4. Database tables are already ready.
-        </p>
-      </div>
-
-      <div className="p-4 rounded-xl bg-white border border-surface-200/90 shadow-card text-left text-xs space-y-2 max-w-md mx-auto">
-        <div className="font-semibold text-surface-800 flex items-center gap-1.5">
-          <Clock className="w-4 h-4 text-amber-600" />
-          Planned Features in Phase 4:
-        </div>
-        <ul className="list-disc list-inside text-surface-500 space-y-1 text-[11px]">
-          <li>Casual, sick, earned, and maternity/paternity leave requests</li>
-          <li>Real-time admin approval / rejection interface with comments</li>
-          <li>Leave ledger & balance counters</li>
-        </ul>
-      </div>
-
-      <div>
-        <Link href="/dashboard/employee">
-          <Button variant="outline" leftIcon={<ArrowLeft className="w-4 h-4" />}>
-            Back to Dashboard
-          </Button>
-        </Link>
-      </div>
-    </div>
-  );
+export default function LeavesPage() {
+  const [requests, setRequests] = useState<Leave[]>([]);
+  const [form, setForm] = useState({ type: 'PAID', start_date: '', end_date: '', remarks: '' });
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const load = async () => { setLoading(true); const response = await fetch('/api/leave-requests'); const result = await response.json(); if (response.ok) setRequests(result.requests); else setMessage(result.error); setLoading(false); };
+  useEffect(() => { void load(); }, []);
+  const submit = async (event: FormEvent) => { event.preventDefault(); setMessage(''); const response = await fetch('/api/leave-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) }); const result = await response.json(); if (!response.ok) setMessage(result.error); else { setMessage('Leave request submitted.'); setForm({ type: 'PAID', start_date: '', end_date: '', remarks: '' }); void load(); } };
+  return <div className="space-y-6"><div><h1 className="text-2xl font-bold text-surface-900">Leave requests</h1><p className="text-sm text-surface-500">Apply for time away and track approval status.</p></div><form onSubmit={submit} className="rounded-2xl border border-surface-200 bg-white p-6 shadow-card space-y-4"><h2 className="font-bold text-surface-900 flex items-center gap-2"><CalendarDays className="w-5 h-5 text-brand-600" /> New request</h2><div className="grid grid-cols-1 sm:grid-cols-3 gap-3"><label className="text-sm text-surface-600">Type<select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })} className="mt-1 w-full rounded-lg border border-surface-200 px-3 py-2"><option value="PAID">Paid</option><option value="SICK">Sick</option><option value="UNPAID">Unpaid</option></select></label><label className="text-sm text-surface-600">Start date<input required type="date" value={form.start_date} onChange={(event) => setForm({ ...form, start_date: event.target.value })} className="mt-1 w-full rounded-lg border border-surface-200 px-3 py-2" /></label><label className="text-sm text-surface-600">End date<input required type="date" value={form.end_date} onChange={(event) => setForm({ ...form, end_date: event.target.value })} className="mt-1 w-full rounded-lg border border-surface-200 px-3 py-2" /></label></div><label className="block text-sm text-surface-600">Remarks<textarea value={form.remarks} onChange={(event) => setForm({ ...form, remarks: event.target.value })} className="mt-1 w-full rounded-lg border border-surface-200 px-3 py-2" rows={3} /></label><Button type="submit" variant="primary" leftIcon={<Send className="w-4 h-4" />}>Submit request</Button>{message && <p className="text-sm text-surface-600">{message}</p>}</form><div className="rounded-2xl border border-surface-200 bg-white shadow-card overflow-hidden"><div className="p-5 border-b border-surface-100"><h2 className="font-bold text-surface-900">My requests</h2></div>{loading ? <p className="p-6 text-sm text-surface-500">Loading requests...</p> : <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="bg-surface-50 text-left text-xs text-surface-500"><tr><th className="p-4">Type</th><th className="p-4">Dates</th><th className="p-4">Status</th><th className="p-4">Admin comment</th></tr></thead><tbody>{requests.map((request) => <tr key={request.id} className="border-t border-surface-100"><td className="p-4">{request.type}</td><td className="p-4">{request.start_date} to {request.end_date}</td><td className="p-4"><Badge variant={badge(request.status)}>{request.status}</Badge></td><td className="p-4 text-surface-600">{request.admin_comment || '—'}</td></tr>)}</tbody></table></div>}</div></div>;
 }

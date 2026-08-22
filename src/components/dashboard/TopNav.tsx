@@ -18,6 +18,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { Badge } from '@/components/ui/Badge';
 import { getInitials } from '@/lib/utils';
+import { NotificationBell } from '@/components/dashboard/NotificationBell';
 
 export function TopNav() {
   const { user, profile, role, signOut } = useAuth();
@@ -40,6 +41,7 @@ export function TopNav() {
         { label: 'Admin Overview', href: '/dashboard/admin', icon: LayoutDashboard },
         { label: 'Team Directory', href: '/dashboard/admin#employees', icon: Users },
         { label: 'Attendance', href: '/dashboard/admin/attendance', icon: CalendarCheck },
+        { label: 'Leave Approvals', href: '/dashboard/admin/leave', icon: CalendarDays },
       ]
     : [
         { label: 'Dashboard', href: '/dashboard/employee', icon: LayoutDashboard },
@@ -102,6 +104,7 @@ export function TopNav() {
 
           {/* Right User Nav & Sign Out */}
           <div className="hidden sm:flex items-center space-x-4">
+            {!isAdmin && <NotificationBell />}
             <div className="flex items-center space-x-3 pr-2">
               <div className="w-8 h-8 rounded-full bg-brand-100 border border-brand-200 text-brand-700 flex items-center justify-center text-xs font-bold shrink-0">
                 {initials}

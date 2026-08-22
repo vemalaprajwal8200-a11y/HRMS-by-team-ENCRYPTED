@@ -1,6 +1,5 @@
-// Phase 4 Type Stub: Leave Requests & Approvals
-export type LeaveType = 'paid' | 'sick' | 'unpaid' | 'casual' | 'maternity' | 'paternity';
-export type LeaveStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+export type LeaveType = 'PAID' | 'SICK' | 'UNPAID';
+export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface LeaveRequest {
   id: string;
@@ -11,9 +10,10 @@ export interface LeaveRequest {
   totalDays: number;
   remarks?: string;
   status: LeaveStatus;
+  adminComment?: string | null;
   reviewedBy?: string | null;
   reviewedByName?: string | null;
-  comments?: string | null;
+  reviewedAt?: string | null;
   createdAt: string;
 }
 

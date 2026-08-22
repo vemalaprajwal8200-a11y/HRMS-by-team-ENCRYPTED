@@ -40,3 +40,13 @@ Verification notes:
 - `deriveAttendanceStatus` is exported from `src/lib/attendance/status.ts` and returns an existing `LEAVE` status unchanged when `source` is `LEAVE_SYNC`.
 - `GET /api/attendance/me` always filters by the authenticated Supabase user ID, so an employee cannot fetch another employee&apos;s records by changing request parameters.
 - Missing daily/weekly rows are returned as lazy `ABSENT` records without inserting anything into the database.
+
+## Leave Phase 4
+
+Apply `supabase/migrations/0003_leave_workflow.sql` after the attendance migration. Employees use `/employee/leave` to submit and track `PAID`, `SICK`, or `UNPAID` requests. Admins use `/admin/leave` to approve or reject pending requests. The database function `decide_leave_request` enforces the terminal state machine and performs approval, `LEAVE_SYNC` attendance upserts for every date, and employee notification creation in one transaction.
+
+Verification guarantees:
+
+- Approval creates one `LEAVE` / `LEAVE_SYNC` attendance record for every date in the requested range.
+- A second approval or rejection of a decided request is rejected by the database state-machine guard and returns HTTP `409`.
+- Employee leave reads and creates are scoped to the authenticated user; only an admin role can call the decision endpoint.
