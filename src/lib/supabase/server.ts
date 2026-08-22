@@ -1,8 +1,9 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { Database } from '@/types/database';
 
-export function createClient() {
+export function createClient(): SupabaseClient<Database> {
   const cookieStore = cookies();
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
@@ -32,5 +33,5 @@ export function createClient() {
         },
       },
     }
-  );
+  ) as unknown as SupabaseClient<Database>;
 }

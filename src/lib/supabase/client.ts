@@ -1,7 +1,8 @@
 import { createBrowserClient } from '@supabase/ssr';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database';
 
-let browserClient: ReturnType<typeof createBrowserClient<Database>> | null = null;
+let browserClient: SupabaseClient<Database> | null = null;
 
 export function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -14,12 +15,12 @@ export function isSupabaseConfigured(): boolean {
   );
 }
 
-export function createClient() {
+export function createClient(): SupabaseClient<Database> {
   if (browserClient) return browserClient;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
 
-  browserClient = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
+  browserClient = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey) as unknown as SupabaseClient<Database>;
   return browserClient;
 }

@@ -14,6 +14,7 @@ import {
   CalendarCheck,
   CalendarDays,
   Users,
+  ClipboardList,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Badge } from '@/components/ui/Badge';
@@ -38,6 +39,7 @@ export function TopNav() {
   const navLinks = isAdmin
     ? [
         { label: 'Admin Overview', href: '/dashboard/admin', icon: LayoutDashboard },
+        { label: 'Attendance', href: '/dashboard/admin/attendance', icon: ClipboardList },
         { label: 'Team Directory', href: '/dashboard/admin#employees', icon: Users },
       ]
     : [

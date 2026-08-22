@@ -69,6 +69,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       attendance: {
         Row: {
@@ -77,7 +78,8 @@ export interface Database {
           date: string;
           check_in: string | null;
           check_out: string | null;
-          status: 'present' | 'absent' | 'half-day' | 'leave';
+          status: 'present' | 'absent' | 'half_day' | 'leave';
+          source: 'auto' | 'leave_sync';
           created_at: string;
         };
         Insert: {
@@ -86,7 +88,8 @@ export interface Database {
           date?: string;
           check_in?: string | null;
           check_out?: string | null;
-          status?: 'present' | 'absent' | 'half-day' | 'leave';
+          status?: 'present' | 'absent' | 'half_day' | 'leave';
+          source?: 'auto' | 'leave_sync';
           created_at?: string;
         };
         Update: {
@@ -95,9 +98,11 @@ export interface Database {
           date?: string;
           check_in?: string | null;
           check_out?: string | null;
-          status?: 'present' | 'absent' | 'half-day' | 'leave';
+          status?: 'present' | 'absent' | 'half_day' | 'leave';
+          source?: 'auto' | 'leave_sync';
           created_at?: string;
         };
+        Relationships: [];
       };
       leave_requests: {
         Row: {
@@ -136,6 +141,7 @@ export interface Database {
           comments?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       payroll: {
         Row: {
@@ -171,7 +177,10 @@ export interface Database {
           status?: 'draft' | 'processed' | 'paid';
           created_at?: string;
         };
+        Relationships: [];
       };
     };
+    Views: {};
+    Functions: {};
   };
 }
