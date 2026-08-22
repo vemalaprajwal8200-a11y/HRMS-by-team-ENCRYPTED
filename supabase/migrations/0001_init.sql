@@ -222,6 +222,7 @@ create policy "Admins can delete profiles"
 drop policy if exists "Users can view own attendance or admin can view all" on public.attendance;
 drop policy if exists "Users can record own attendance or admin manage" on public.attendance;
 drop policy if exists "Admins can update attendance" on public.attendance;
+drop policy if exists "Users can update own attendance or admins update all" on public.attendance;
 
 create policy "Users can view own attendance or admin can view all"
     on public.attendance for select
@@ -231,9 +232,10 @@ create policy "Users can record own attendance or admin manage"
     on public.attendance for insert
     with check (auth.uid() = user_id or is_admin());
 
-create policy "Admins can update attendance"
+create policy "Users can update own attendance or admins update all"
     on public.attendance for update
-    using (is_admin());
+    using (auth.uid() = user_id or is_admin())
+    with check (auth.uid() = user_id or is_admin());
 
 -- LEAVE REQUESTS RLS POLICIES
 drop policy if exists "Users can view own leave requests or admin view all" on public.leave_requests;
