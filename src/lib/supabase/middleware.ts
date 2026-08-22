@@ -97,7 +97,10 @@ export async function updateSession(request: NextRequest) {
         .eq('id', user.id)
         .maybeSingle();
 
-      const userRole = (profile as { role?: string } | null)?.role;
+      const userRole =
+        (profile as { role?: string } | null)?.role ||
+        (user.user_metadata?.role as string | undefined) ||
+        'employee';
       const targetPath = userRole === 'admin' ? '/dashboard/admin' : '/dashboard/employee';
       return NextResponse.redirect(new URL(targetPath, request.url));
     }
@@ -110,8 +113,12 @@ export async function updateSession(request: NextRequest) {
         .eq('id', user.id)
         .maybeSingle();
 
-      const userRole = (profile as { role?: string } | null)?.role;
-      if (userRole && userRole !== 'admin') {
+      const userRole =
+        (profile as { role?: string } | null)?.role ||
+        (user.user_metadata?.role as string | undefined) ||
+        'employee';
+
+      if (userRole !== 'admin') {
         return NextResponse.redirect(new URL('/dashboard/employee', request.url));
       }
     }

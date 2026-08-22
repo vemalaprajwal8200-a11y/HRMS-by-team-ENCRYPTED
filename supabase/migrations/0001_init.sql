@@ -6,21 +6,7 @@
 create extension if not exists "pgcrypto";
 
 -- ==============================================================================
--- 1. USERS TABLE (Phase 1 foundation)
--- Supabase owns authentication credentials in auth.users. This public table keeps
--- the application-level identity and role fields available to later phases.
--- ==============================================================================
-create table if not exists public.users (
-    id uuid primary key references auth.users(id) on delete cascade,
-    employee_id text unique not null,
-    email text unique not null,
-    role text not null check (role in ('employee', 'admin')) default 'employee',
-    email_verified boolean not null default false,
-    created_at timestamptz not null default now()
-);
-
--- ==============================================================================
--- 2. PROFILES TABLE
+-- 1. PROFILES TABLE
 -- ==============================================================================
 create table if not exists public.profiles (
     id uuid primary key references auth.users(id) on delete cascade,
@@ -43,7 +29,7 @@ create table if not exists public.profiles (
 );
 
 -- ==============================================================================
--- 3. ATTENDANCE TABLE (Phase 3 Stub)
+-- 2. ATTENDANCE TABLE (Phase 3 Stub)
 -- ==============================================================================
 create table if not exists public.attendance (
     id uuid primary key default gen_random_uuid(),
@@ -51,14 +37,12 @@ create table if not exists public.attendance (
     date date not null default current_date,
     check_in timestamptz,
     check_out timestamptz,
-    status text check (status in ('PRESENT', 'ABSENT', 'HALF_DAY', 'LEAVE')) default 'ABSENT',
-    source text not null check (source in ('AUTO', 'LEAVE_SYNC')) default 'AUTO',
+    status text check (status in ('present', 'absent', 'half-day', 'leave')) default 'present',
     created_at timestamptz not null default now()
-    ,constraint attendance_user_date_key unique (user_id, date)
 );
 
 -- ==============================================================================
--- 4. LEAVE REQUESTS TABLE (Phase 4 Stub)
+-- 3. LEAVE REQUESTS TABLE (Phase 4 Stub)
 -- ==============================================================================
 create table if not exists public.leave_requests (
     id uuid primary key default gen_random_uuid(),
@@ -74,7 +58,7 @@ create table if not exists public.leave_requests (
 );
 
 -- ==============================================================================
--- 5. PAYROLL TABLE (Phase 5 Stub)
+-- 4. PAYROLL TABLE (Phase 5 Stub)
 -- ==============================================================================
 create table if not exists public.payroll (
     id uuid primary key default gen_random_uuid(),
@@ -89,28 +73,47 @@ create table if not exists public.payroll (
 );
 
 -- ==============================================================================
--- 6. TRIGGERS: Sync auth.users to public.users and public.profiles
+-- 5. TRIGGER: Sync auth.users to public.profiles on Signup (Robust & Collision-Safe)
 -- ==============================================================================
 create or replace function public.handle_new_user()
-returns trigger as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
 declare
     _employee_id text;
     _full_name text;
     _role text;
+    _id_exists boolean;
 begin
-    -- Extract metadata provided during signUp()
-    _employee_id := coalesce(new.raw_user_meta_data->>'employee_id', 'EMP-' || upper(substring(new.id::text, 1, 6)));
-    _full_name := coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1));
-    _role := coalesce(new.raw_user_meta_data->>'role', 'employee');
+    -- 1. Extract and sanitize full name
+    _full_name := coalesce(
+        nullif(trim(new.raw_user_meta_data->>'full_name'), ''),
+        split_part(coalesce(new.email, 'user'), '@', 1)
+    );
 
-    insert into public.users (id, employee_id, email, role, email_verified)
-    values (new.id, _employee_id, new.email, _role, new.email_confirmed_at is not null)
-    on conflict (id) do update set
-        email = excluded.email,
-        employee_id = excluded.employee_id,
-        role = excluded.role,
-        email_verified = excluded.email_verified;
+    -- 2. Extract and normalize role (strictly 'admin' or 'employee')
+    _role := lower(coalesce(nullif(trim(new.raw_user_meta_data->>'role'), ''), 'employee'));
+    if _role not in ('admin', 'employee') then
+        _role := 'employee';
+    end if;
 
+    -- 3. Extract and sanitize employee_id
+    _employee_id := upper(coalesce(nullif(trim(new.raw_user_meta_data->>'employee_id'), ''), 'EMP-' || substring(new.id::text, 1, 6)));
+
+    -- 4. Check for employee_id collisions with other users
+    select exists (
+        select 1 from public.profiles
+        where employee_id = _employee_id and id != new.id
+    ) into _id_exists;
+
+    -- If collision occurs, make employee_id unique by appending a unique short hash
+    if _id_exists then
+        _employee_id := _employee_id || '-' || upper(substring(new.id::text, 1, 4));
+    end if;
+
+    -- 5. Insert or update profile safely
     insert into public.profiles (
         id,
         employee_id,
@@ -122,87 +125,84 @@ begin
         employment_type,
         base_salary,
         allowances,
-        deductions
+        deductions,
+        created_at,
+        updated_at
     )
     values (
         new.id,
         _employee_id,
         _full_name,
-        new.email,
+        coalesce(new.email, ''),
         _role,
         case when _role = 'admin' then 'HR Administrator' else 'Software Engineer' end,
         case when _role = 'admin' then 'Human Resources' else 'Engineering' end,
         'Full-time',
         case when _role = 'admin' then 95000 else 75000 end,
         case when _role = 'admin' then 30000 else 25000 end,
-        case when _role = 'admin' then 15000 else 10000 end
+        case when _role = 'admin' then 15000 else 10000 end,
+        now(),
+        now()
     )
     on conflict (id) do update set
         email = excluded.email,
         full_name = coalesce(excluded.full_name, profiles.full_name),
+        role = excluded.role,
         updated_at = now();
 
     return new;
+exception
+    when others then
+        -- Log warning and allow auth signup to complete rather than aborting transaction
+        raise warning 'handle_new_user trigger encountered an error: %', sqlerrm;
+        return new;
 end;
-$$ language plpgsql security definer;
+$$;
 
--- Drop trigger if already exists
+-- Drop trigger if already exists and recreate
 drop trigger if exists on_auth_user_created on auth.users;
-
--- Create trigger on auth.users
 create trigger on_auth_user_created
     after insert on auth.users
     for each row execute function public.handle_new_user();
-
-create or replace function public.handle_user_verification()
-returns trigger as $$
-begin
-    update public.users
-    set email = new.email,
-        email_verified = new.email_confirmed_at is not null
-    where id = new.id;
-    return new;
-end;
-$$ language plpgsql security definer;
-
-drop trigger if exists on_auth_user_updated on auth.users;
-create trigger on_auth_user_updated
-    after update of email, email_confirmed_at on auth.users
-    for each row execute function public.handle_user_verification();
 
 -- ==============================================================================
 -- 6. ROW LEVEL SECURITY (RLS) POLICIES
 -- ==============================================================================
 alter table public.profiles enable row level security;
-alter table public.users enable row level security;
 alter table public.attendance enable row level security;
 alter table public.leave_requests enable row level security;
 alter table public.payroll enable row level security;
 
--- Helper function: Check if current authenticated user is an admin
+-- Helper function: Check if current authenticated user is an admin (Security Definer with isolated search path)
 create or replace function public.is_admin()
-returns boolean as $$
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+stable
+as $$
 begin
     return exists (
         select 1 from public.profiles
         where id = auth.uid() and role = 'admin'
     );
 end;
-$$ language plpgsql security definer stable;
+$$;
 
 -- Drop old policies if existing to avoid conflict on re-runs
 drop policy if exists "Users can view their own profile or admins view all" on public.profiles;
+drop policy if exists "Users can view profiles" on public.profiles;
 drop policy if exists "Users can update their own profile or admins update all" on public.profiles;
 drop policy if exists "Users can insert their own profile or admins insert all" on public.profiles;
 drop policy if exists "Admins can delete profiles" on public.profiles;
 
 -- PROFILES RLS POLICIES
--- 1. SELECT: Users can SELECT their own row (auth.uid() = id), Admins can SELECT all rows
-create policy "Users can view their own profile or admins view all"
+-- 1. SELECT: Authenticated users can view team member directory records
+create policy "Users can view profiles"
     on public.profiles for select
-    using (auth.uid() = id or is_admin());
+    using (auth.role() = 'authenticated');
 
--- 2. UPDATE: Users can UPDATE their own row (auth.uid() = id), Admins can UPDATE all rows
+-- 2. UPDATE: Users can UPDATE their own contact info, Admins can update all fields
 create policy "Users can update their own profile or admins update all"
     on public.profiles for update
     using (auth.uid() = id or is_admin())
@@ -217,12 +217,6 @@ create policy "Users can insert their own profile or admins insert all"
 create policy "Admins can delete profiles"
     on public.profiles for delete
     using (is_admin());
-
--- USERS RLS POLICIES: expose identity to the owner and role-aware admins only.
-drop policy if exists "Users can view own identity or admins view all" on public.users;
-create policy "Users can view own identity or admins view all"
-    on public.users for select
-    using (auth.uid() = id or is_admin());
 
 -- ATTENDANCE RLS POLICIES
 drop policy if exists "Users can view own attendance or admin can view all" on public.attendance;
