@@ -1,0 +1,21 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { IndianRupee, Save } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+
+type PayrollRow = { id: string; user_id: string; basic_salary: number; allowances: number; deductions: number; profiles: { full_name: string; employee_id: string; department: string | null } };
+type Draft = { basic_salary: string; allowances: string; deductions: string };
+
+export default function AdminPayrollPage() {
+  const [rows, setRows] = useState<PayrollRow[]>([]);
+  const [department, setDepartment] = useState('');
+  const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  const [message, setMessage] = useState('');
+  const load = async () => { const params = department ? `?department=${encodeURIComponent(department)}` : ''; const response = await fetch(`/api/payroll${params}`); const result = await response.json(); if (response.ok) setRows(result.payroll); else setMessage(result.error); };
+  useEffect(() => { void load(); }, [department]);
+  const edit = (row: PayrollRow) => setDrafts({ ...drafts, [row.user_id]: { basic_salary: String(row.basic_salary), allowances: String(row.allowances), deductions: String(row.deductions) } });
+  const save = async (row: PayrollRow) => { const draft = drafts[row.user_id]; const response = await fetch(`/api/payroll/${row.user_id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(draft) }); const result = await response.json(); if (!response.ok) setMessage(result.error); else { setMessage('Payroll updated.'); setDrafts({ ...drafts, [row.user_id]: undefined as never }); void load(); } };
+  return <div className="space-y-6"><div><h1 className="text-2xl font-bold text-surface-900">Payroll</h1><p className="text-sm text-surface-500">Maintain the current salary structure for each employee.</p></div><input aria-label="Filter by department" value={department} onChange={(event) => setDepartment(event.target.value)} placeholder="Filter by department" className="rounded-lg border border-surface-200 px-3 py-2 text-sm" />{message && <p className="text-sm text-surface-600">{message}</p>}<div className="rounded-2xl border border-surface-200 bg-white shadow-card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm"><thead className="bg-surface-50 text-left text-xs text-surface-500"><tr><th className="p-4">Employee</th><th className="p-4">Basic salary</th><th className="p-4">Allowances</th><th className="p-4">Deductions</th><th className="p-4">Net display</th><th className="p-4">Action</th></tr></thead><tbody>{rows.map((row) => { const draft = drafts[row.user_id]; const values = draft || { basic_salary: String(row.basic_salary), allowances: String(row.allowances), deductions: String(row.deductions) }; const net = Number(values.basic_salary) + Number(values.allowances) - Number(values.deductions); return <tr key={row.user_id} className="border-t border-surface-100"><td className="p-4"><div className="font-medium">{row.profiles.full_name}</div><div className="text-xs text-surface-500">{row.profiles.employee_id} · {row.profiles.department || '—'}</div></td>{(['basic_salary', 'allowances', 'deductions'] as const).map((field) => <td className="p-4" key={field}>{draft ? <input type="number" min="0" value={values[field]} onChange={(event) => setDrafts({ ...drafts, [row.user_id]: { ...values, [field]: event.target.value } })} className="w-32 rounded-lg border border-surface-200 px-2 py-1.5" /> : `₹${Number(values[field]).toLocaleString('en-IN')}`}</td>)}<td className="p-4"><Badge variant={net >= 0 ? 'success' : 'danger'}>₹{Number.isFinite(net) ? net.toLocaleString('en-IN') : '—'}</Badge></td><td className="p-4">{draft ? <Button size="sm" variant="primary" onClick={() => void save(row)} leftIcon={<Save className="w-3.5 h-3.5" />}>Save</Button> : <Button size="sm" variant="outline" onClick={() => edit(row)} leftIcon={<IndianRupee className="w-3.5 h-3.5" />}>Edit</Button>}</td></tr>; })}</tbody></table></div></div></div>;
+}

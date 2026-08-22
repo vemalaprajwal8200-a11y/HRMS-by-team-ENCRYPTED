@@ -154,6 +154,11 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
+          basic_salary: number;
+          allowances: number;
+          deductions: number;
+          updated_at: string;
+          updated_by: string | null;
           month: string;
           gross_salary: number;
           total_allowances: number;
@@ -165,6 +170,11 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
+          basic_salary?: number;
+          allowances?: number;
+          deductions?: number;
+          updated_at?: string;
+          updated_by?: string | null;
           month: string;
           gross_salary: number;
           total_allowances?: number;
@@ -176,6 +186,11 @@ export interface Database {
         Update: {
           id?: string;
           user_id?: string;
+          basic_salary?: number;
+          allowances?: number;
+          deductions?: number;
+          updated_at?: string;
+          updated_by?: string | null;
           month?: string;
           gross_salary?: number;
           total_allowances?: number;

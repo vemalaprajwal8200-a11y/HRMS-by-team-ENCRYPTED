@@ -50,3 +50,13 @@ Verification guarantees:
 - Approval creates one `LEAVE` / `LEAVE_SYNC` attendance record for every date in the requested range.
 - A second approval or rejection of a decided request is rejected by the database state-machine guard and returns HTTP `409`.
 - Employee leave reads and creates are scoped to the authenticated user; only an admin role can call the decision endpoint.
+
+## Payroll Phase 5
+
+Apply `supabase/migrations/0004_payroll_module.sql` after the Phase 4 migration. Employees can view their current payroll snapshot at `/employee/profile` through `GET /api/payroll/me`; the profile display computes net pay as basic salary plus allowances minus deductions without storing a computed field. Admins can manage current records at `/admin/payroll` through `GET /api/payroll` and `PATCH /api/payroll/:userId`.
+
+Payroll guarantees:
+
+- Employee payroll reads are filtered by the authenticated user ID, and the employee-facing API has no mutation method.
+- Admin-only updates reject zero or negative basic salary, negative allowances/deductions, and deductions greater than basic salary plus allowances before any database write.
+- The profile salary section uses the real `/api/payroll/me` response rather than the profile snapshot values.

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   User,
@@ -35,6 +35,18 @@ export function ProfileView({
   backLabel = 'Back to Dashboard',
 }: ProfileViewProps) {
   const initials = getInitials(profile.fullName);
+  const [payroll, setPayroll] = useState<{ basic_salary: number; allowances: number; deductions: number } | null>(null);
+
+  useEffect(() => {
+    void fetch('/api/payroll/me')
+      .then((response) => response.ok ? response.json() : { payroll: null })
+      .then((result) => setPayroll(result.payroll));
+  }, []);
+
+  const basicSalary = payroll?.basic_salary ?? 0;
+  const allowances = payroll?.allowances ?? 0;
+  const deductions = payroll?.deductions ?? 0;
+  const netSalary = basicSalary + allowances - deductions;
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -203,7 +215,7 @@ export function ProfileView({
           <div className="p-4 rounded-xl bg-surface-50 border border-surface-200/60">
             <span className="text-xs text-surface-500">Base Salary</span>
             <div className="text-xl font-bold text-surface-900 mt-1">
-              {formatCurrency(profile.salaryStructure.baseSalary)}
+              {formatCurrency(basicSalary)}
             </div>
             <span className="text-[11px] text-surface-400">Fixed basic component</span>
           </div>
@@ -211,7 +223,7 @@ export function ProfileView({
           <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-100">
             <span className="text-xs text-emerald-700">Allowances (HRA + Special)</span>
             <div className="text-xl font-bold text-emerald-900 mt-1">
-              +{formatCurrency(profile.salaryStructure.allowances)}
+              +{formatCurrency(allowances)}
             </div>
             <span className="text-[11px] text-emerald-600/80">Monthly additions</span>
           </div>
@@ -219,7 +231,7 @@ export function ProfileView({
           <div className="p-4 rounded-xl bg-rose-50/50 border border-rose-100">
             <span className="text-xs text-rose-700">Statutory Deductions (PF + Tax)</span>
             <div className="text-xl font-bold text-rose-900 mt-1">
-              -{formatCurrency(profile.salaryStructure.deductions)}
+              -{formatCurrency(deductions)}
             </div>
             <span className="text-[11px] text-rose-600/80">Monthly deductions</span>
           </div>
@@ -232,11 +244,11 @@ export function ProfileView({
               Estimated Net Take-Home Salary
             </span>
             <p className="text-xs text-brand-600/90 mt-0.5">
-              Base + Allowances - Deductions (Phase 5 Payroll Integration Ready)
+              Basic salary + Allowances - Deductions
             </p>
           </div>
           <div className="text-2xl font-bold text-brand-900">
-            {formatCurrency(profile.salaryStructure.netSalary)}
+            {formatCurrency(netSalary)}
             <span className="text-xs font-normal text-brand-700 ml-1">/ month</span>
           </div>
         </div>

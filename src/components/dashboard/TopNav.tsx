@@ -14,6 +14,7 @@ import {
   CalendarCheck,
   CalendarDays,
   Users,
+  IndianRupee,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Badge } from '@/components/ui/Badge';
@@ -42,6 +43,7 @@ export function TopNav() {
         { label: 'Team Directory', href: '/dashboard/admin#employees', icon: Users },
         { label: 'Attendance', href: '/dashboard/admin/attendance', icon: CalendarCheck },
         { label: 'Leave Approvals', href: '/dashboard/admin/leave', icon: CalendarDays },
+        { label: 'Payroll', href: '/dashboard/admin/payroll', icon: IndianRupee },
       ]
     : [
         { label: 'Dashboard', href: '/dashboard/employee', icon: LayoutDashboard },
