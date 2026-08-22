@@ -68,6 +68,7 @@ export function TopNav() {
         { label: 'Employees', href: '/dashboard/admin', icon: Users },
         { label: 'Attendance', href: '/dashboard/admin/attendance', icon: CalendarCheck },
         { label: 'Time Off', href: '/dashboard/admin/leave', icon: CalendarDays },
+        { label: 'Allocation', href: '/dashboard/admin/allocation', icon: CalendarDays },
       ]
     : [
         { label: 'Employees', href: '/dashboard/employee', icon: Users },

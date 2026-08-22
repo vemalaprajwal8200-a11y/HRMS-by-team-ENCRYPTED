@@ -34,7 +34,9 @@ Deploy this Next.js app to Vercel, add the same Supabase environment variables, 
 
 The authenticated shell now uses the wireframe structure: Employees, Attendance, and Time Off navigation; status-aware check-in/out; avatar menu; notification bell; responsive tables; live dashboard aggregation; and a functional four-tab profile workspace. The company/admin signup form no longer offers employee self-registration.
 
-New UI work that still needs a backend contract is intentionally isolated: admin-created employee provisioning with generated login IDs/passwords, profile photo upload, and real password-change submission. The current app has no service-role employee-provisioning or password-update endpoint, so these controls are presented without inventing unsafe client-side auth logic.
+Admin employee provisioning, generated login IDs/passwords, profile photo upload, and real password-change submission are implemented. Provisioning requires the server-only `SUPABASE_SERVICE_ROLE_KEY`; avatar upload requires `supabase/migrations/0005_avatar_storage.sql`.
+
+Admin capability additions include `GET/POST /api/employees`, admin profile `GET/PATCH /api/profile/:userId`, detailed payroll updates, `GET/PATCH /api/leave-balances`, and `/dashboard/admin/allocation`. Apply `supabase/migrations/0006_admin_capabilities.sql` before using them. New employee provisioning sets `must_change_password`; middleware redirects that employee to the Security tab until the password is changed.
 
 ## Attendance Phase 3
 

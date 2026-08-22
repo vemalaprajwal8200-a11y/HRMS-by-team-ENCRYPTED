@@ -2,6 +2,7 @@
 
 import { ChangeEvent, ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, Camera, LockKeyhole, Mail, Phone, Shield } from 'lucide-react';
 import { FormattedProfile } from '@/types/profile';
 import { Badge } from '@/components/ui/Badge';
@@ -14,7 +15,8 @@ interface ProfileViewProps { profile: FormattedProfile; backHref?: string; backL
 
 export function ProfileView({ profile, backHref = '/dashboard/employee', backLabel = 'Back to Dashboard' }: ProfileViewProps) {
   const supabase = createClient();
-  const [tab, setTab] = useState<Tab>('resume');
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState<Tab>(searchParams.get('tab') === 'security' ? 'security' : 'resume');
   const [payroll, setPayroll] = useState<{ basic_salary: number; allowances: number; deductions: number } | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -23,7 +25,7 @@ export function ProfileView({ profile, backHref = '/dashboard/employee', backLab
   const basic = payroll?.basic_salary ?? profile.salaryStructure.baseSalary;
   const allowances = payroll?.allowances ?? profile.salaryStructure.allowances;
   const deductions = payroll?.deductions ?? profile.salaryStructure.deductions;
-  const updatePassword = async () => { if (newPassword.length < 8 || newPassword !== confirmPassword) { setMessage('Use 8 or more characters and make both passwords match.'); return; } const { error } = await supabase.auth.updateUser({ password: newPassword }); setMessage(error?.message || 'Password updated successfully.'); if (!error) { setNewPassword(''); setConfirmPassword(''); } };
+  const updatePassword = async () => { if (newPassword.length < 8 || newPassword !== confirmPassword) { setMessage('Use 8 or more characters and make both passwords match.'); return; } const { error } = await supabase.auth.updateUser({ password: newPassword }); if (!error) await supabase.from('users').update({ must_change_password: false } as never).eq('id', profile.id); setMessage(error?.message || 'Password updated successfully.'); if (!error) { setNewPassword(''); setConfirmPassword(''); } };
   const uploadPhoto = async (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; setMessage('Uploading photo...'); const path = `${profile.id}.${file.name.split('.').pop() || 'jpg'}`; const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type }); if (error) { setMessage(error.message); return; } const { data } = supabase.storage.from('avatars').getPublicUrl(path); const update = await supabase.from('profiles').update({ photo_url: data.publicUrl } as never).eq('id', profile.id); setMessage(update.error?.message || 'Photo updated successfully.'); };
   const tabs: Array<[Tab, string]> = [['resume', 'Resume'], ['private', 'Private Info'], ['salary', 'Salary Info'], ['security', 'Security']];
   return <div className="mx-auto max-w-5xl space-y-6">

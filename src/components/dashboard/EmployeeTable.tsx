@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Search, UserCheck, ArrowRight, Building, Filter, ExternalLink } from 'lucide-react';
+import { Search, UserCheck, ArrowRight, Building, Filter, ExternalLink, Plane } from 'lucide-react';
 import { FormattedProfile } from '@/types/profile';
 import { Badge } from '@/components/ui/Badge';
 import { TableSkeleton } from '@/components/ui/Skeleton';
@@ -117,8 +117,9 @@ export function EmployeeTable({ employees, isLoading }: EmployeeTableProps) {
                       {/* Name and Email */}
                       <td className="py-3.5 px-4 sm:px-6">
                         <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 font-bold text-xs flex items-center justify-center shrink-0 border border-brand-200">
+                          <div className="relative w-8 h-8 rounded-full bg-brand-100 text-brand-700 font-bold text-xs flex items-center justify-center shrink-0 border border-brand-200">
                             {initials}
+                            <span className="absolute -right-1 -top-1 rounded-full bg-white p-0.5">{emp.attendanceStatus === 'LEAVE' ? <Plane className="h-3 w-3 text-sky-600" /> : <span className={`block h-2.5 w-2.5 rounded-full ${emp.attendanceStatus === 'PRESENT' ? 'bg-emerald-500' : 'bg-amber-400'}`} />}</span>
                           </div>
                           <div>
                             <div className="font-semibold text-surface-900 group-hover:text-brand-600 transition-colors">
