@@ -1,27 +1,31 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   User,
   Mail,
   Phone,
   MapPin,
   Briefcase,
-  Building,
   Calendar,
   IndianRupee,
   FileText,
   Shield,
   ArrowLeft,
-  Clock,
-  Sparkles,
-  Download,
+  Edit3,
+  Check,
+  X,
+  CheckCircle2,
 } from 'lucide-react';
 import { FormattedProfile } from '@/types/profile';
 import { Badge } from '@/components/ui/Badge';
 import { formatCurrency, formatDate, getInitials } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ProfileViewProps {
   profile: FormattedProfile;
@@ -30,11 +34,55 @@ interface ProfileViewProps {
 }
 
 export function ProfileView({
-  profile,
+  profile: initialProfile,
   backHref = '/dashboard/employee',
   backLabel = 'Back to Dashboard',
 }: ProfileViewProps) {
+  const { user, refreshProfile } = useAuth();
+  const [profile, setProfile] = useState<FormattedProfile>(initialProfile);
+  const [editContactOpen, setEditContactOpen] = useState(false);
+  const [phone, setPhone] = useState(profile.phone || '');
+  const [address, setAddress] = useState(profile.address || '');
+  const [isSaving, setIsSaving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
   const initials = getInitials(profile.fullName);
+  const isOwner = user?.id === profile.id;
+
+  const handleSaveContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    setSuccessMsg(null);
+
+    try {
+      const supabase = createClient();
+      const { data, error } = await (supabase.from('profiles') as any)
+        .update({
+          phone: phone.trim() || null,
+          address: address.trim() || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', profile.id)
+        .select()
+        .single();
+
+      if (!error && data) {
+        setProfile({
+          ...profile,
+          phone: data.phone || 'Not provided',
+          address: data.address || 'Not provided',
+        });
+        setSuccessMsg('Contact details updated successfully!');
+        if (refreshProfile) refreshProfile();
+        setTimeout(() => {
+          setEditContactOpen(false);
+          setSuccessMsg(null);
+        }, 1000);
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -104,11 +152,22 @@ export function ProfileView({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Personal Details */}
         <div className="p-6 rounded-2xl border border-surface-200/90 bg-white shadow-card space-y-4">
-          <div className="flex items-center space-x-2 pb-3 border-b border-surface-100">
-            <User className="w-4 h-4 text-brand-600" />
-            <h3 className="text-sm font-semibold text-surface-900">
-              Personal Details
-            </h3>
+          <div className="flex items-center justify-between pb-3 border-b border-surface-100">
+            <div className="flex items-center space-x-2">
+              <User className="w-4 h-4 text-brand-600" />
+              <h3 className="text-sm font-semibold text-surface-900">
+                Personal & Contact Details
+              </h3>
+            </div>
+            {isOwner && (
+              <button
+                onClick={() => setEditContactOpen(true)}
+                className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Edit Contact</span>
+              </button>
+            )}
           </div>
 
           <dl className="grid grid-cols-1 gap-3.5 text-xs sm:text-sm">
@@ -232,7 +291,7 @@ export function ProfileView({
               Estimated Net Take-Home Salary
             </span>
             <p className="text-xs text-brand-600/90 mt-0.5">
-              Base + Allowances - Deductions (Phase 5 Payroll Integration Ready)
+              Base + Allowances - Deductions (Monthly Payroll Structure)
             </p>
           </div>
           <div className="text-2xl font-bold text-brand-900">
@@ -242,43 +301,79 @@ export function ProfileView({
         </div>
       </div>
 
-      {/* Documents Placeholder Section */}
-      <div className="p-6 rounded-2xl border border-surface-200/90 bg-white shadow-card space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-surface-100">
-          <div className="flex items-center space-x-2">
-            <FileText className="w-4 h-4 text-brand-600" />
-            <h3 className="text-sm font-semibold text-surface-900">
-              Employee Documents
-            </h3>
-          </div>
-          <span className="text-xs text-surface-400 bg-surface-100 px-2.5 py-0.5 rounded-full">
-            Read-only stub
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {profile.documents.map((doc) => (
-            <div
-              key={doc.id}
-              className="p-3.5 rounded-xl border border-surface-200 bg-surface-50/50 flex items-center justify-between text-xs"
+      {/* EDIT CONTACT MODAL */}
+      <AnimatePresence>
+        {editContactOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-150">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-xl border border-surface-200 w-full max-w-md overflow-hidden"
             >
-              <div className="flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center">
-                  <FileText className="w-4 h-4" />
-                </div>
+              <div className="p-5 border-b border-surface-100 flex items-center justify-between">
                 <div>
-                  <div className="font-semibold text-surface-800">{doc.name}</div>
-                  <div className="text-[11px] text-surface-400">Verified document</div>
+                  <h3 className="text-base font-bold text-surface-900">
+                    Update Contact Details
+                  </h3>
+                  <p className="text-xs text-surface-500">
+                    Update your phone number and residential address
+                  </p>
                 </div>
+                <button
+                  onClick={() => setEditContactOpen(false)}
+                  className="p-1 rounded-lg text-surface-400 hover:text-surface-700 hover:bg-surface-100"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              <span className="text-xs text-surface-400 font-medium px-2 py-1 bg-white rounded border border-surface-200">
-                Uploaded
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+              <form onSubmit={handleSaveContact} className="p-5 space-y-4 text-xs sm:text-sm">
+                {successMsg && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl flex items-center gap-2 text-xs">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{successMsg}</span>
+                  </div>
+                )}
+
+                <Input
+                  label="Phone Number"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+91 98765 43210"
+                />
+
+                <Input
+                  label="Residential Address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="e.g. Indiranagar, Bangalore, KA"
+                />
+
+                <div className="pt-2 border-t border-surface-100 flex items-center justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="md"
+                    onClick={() => setEditContactOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="md"
+                    isLoading={isSaving}
+                    leftIcon={<Check className="w-4 h-4" />}
+                  >
+                    Save Contact
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

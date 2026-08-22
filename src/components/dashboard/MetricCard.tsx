@@ -12,7 +12,7 @@ export interface MetricCardProps {
   icon: LucideIcon;
   trend?: string;
   trendPositive?: boolean;
-  accentColor?: 'brand' | 'emerald' | 'amber' | 'purple';
+  accentColor?: 'brand' | 'emerald' | 'amber' | 'purple' | 'rose';
   delayIndex?: number;
 }
 
@@ -46,6 +46,11 @@ export function MetricCard({
       bg: 'bg-purple-50',
       text: 'text-purple-600',
       border: 'border-purple-100',
+    },
+    rose: {
+      bg: 'bg-rose-50',
+      text: 'text-rose-600',
+      border: 'border-rose-100',
     },
   };
 

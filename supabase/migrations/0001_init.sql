@@ -73,20 +73,47 @@ create table if not exists public.payroll (
 );
 
 -- ==============================================================================
--- 5. TRIGGER: Sync auth.users to public.profiles on Signup
+-- 5. TRIGGER: Sync auth.users to public.profiles on Signup (Robust & Collision-Safe)
 -- ==============================================================================
 create or replace function public.handle_new_user()
-returns trigger as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
 declare
     _employee_id text;
     _full_name text;
     _role text;
+    _id_exists boolean;
 begin
-    -- Extract metadata provided during signUp()
-    _employee_id := coalesce(new.raw_user_meta_data->>'employee_id', 'EMP-' || upper(substring(new.id::text, 1, 6)));
-    _full_name := coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1));
-    _role := coalesce(new.raw_user_meta_data->>'role', 'employee');
+    -- 1. Extract and sanitize full name
+    _full_name := coalesce(
+        nullif(trim(new.raw_user_meta_data->>'full_name'), ''),
+        split_part(coalesce(new.email, 'user'), '@', 1)
+    );
 
+    -- 2. Extract and normalize role (strictly 'admin' or 'employee')
+    _role := lower(coalesce(nullif(trim(new.raw_user_meta_data->>'role'), ''), 'employee'));
+    if _role not in ('admin', 'employee') then
+        _role := 'employee';
+    end if;
+
+    -- 3. Extract and sanitize employee_id
+    _employee_id := upper(coalesce(nullif(trim(new.raw_user_meta_data->>'employee_id'), ''), 'EMP-' || substring(new.id::text, 1, 6)));
+
+    -- 4. Check for employee_id collisions with other users
+    select exists (
+        select 1 from public.profiles
+        where employee_id = _employee_id and id != new.id
+    ) into _id_exists;
+
+    -- If collision occurs, make employee_id unique by appending a unique short hash
+    if _id_exists then
+        _employee_id := _employee_id || '-' || upper(substring(new.id::text, 1, 4));
+    end if;
+
+    -- 5. Insert or update profile safely
     insert into public.profiles (
         id,
         employee_id,
@@ -98,34 +125,42 @@ begin
         employment_type,
         base_salary,
         allowances,
-        deductions
+        deductions,
+        created_at,
+        updated_at
     )
     values (
         new.id,
         _employee_id,
         _full_name,
-        new.email,
+        coalesce(new.email, ''),
         _role,
         case when _role = 'admin' then 'HR Administrator' else 'Software Engineer' end,
         case when _role = 'admin' then 'Human Resources' else 'Engineering' end,
         'Full-time',
         case when _role = 'admin' then 95000 else 75000 end,
         case when _role = 'admin' then 30000 else 25000 end,
-        case when _role = 'admin' then 15000 else 10000 end
+        case when _role = 'admin' then 15000 else 10000 end,
+        now(),
+        now()
     )
     on conflict (id) do update set
         email = excluded.email,
         full_name = coalesce(excluded.full_name, profiles.full_name),
+        role = excluded.role,
         updated_at = now();
 
     return new;
+exception
+    when others then
+        -- Log warning and allow auth signup to complete rather than aborting transaction
+        raise warning 'handle_new_user trigger encountered an error: %', sqlerrm;
+        return new;
 end;
-$$ language plpgsql security definer;
+$$;
 
--- Drop trigger if already exists
+-- Drop trigger if already exists and recreate
 drop trigger if exists on_auth_user_created on auth.users;
-
--- Create trigger on auth.users
 create trigger on_auth_user_created
     after insert on auth.users
     for each row execute function public.handle_new_user();
@@ -138,30 +173,36 @@ alter table public.attendance enable row level security;
 alter table public.leave_requests enable row level security;
 alter table public.payroll enable row level security;
 
--- Helper function: Check if current authenticated user is an admin
+-- Helper function: Check if current authenticated user is an admin (Security Definer with isolated search path)
 create or replace function public.is_admin()
-returns boolean as $$
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth
+stable
+as $$
 begin
     return exists (
         select 1 from public.profiles
         where id = auth.uid() and role = 'admin'
     );
 end;
-$$ language plpgsql security definer stable;
+$$;
 
 -- Drop old policies if existing to avoid conflict on re-runs
 drop policy if exists "Users can view their own profile or admins view all" on public.profiles;
+drop policy if exists "Users can view profiles" on public.profiles;
 drop policy if exists "Users can update their own profile or admins update all" on public.profiles;
 drop policy if exists "Users can insert their own profile or admins insert all" on public.profiles;
 drop policy if exists "Admins can delete profiles" on public.profiles;
 
 -- PROFILES RLS POLICIES
--- 1. SELECT: Users can SELECT their own row (auth.uid() = id), Admins can SELECT all rows
-create policy "Users can view their own profile or admins view all"
+-- 1. SELECT: Authenticated users can view team member directory records
+create policy "Users can view profiles"
     on public.profiles for select
-    using (auth.uid() = id or is_admin());
+    using (auth.role() = 'authenticated');
 
--- 2. UPDATE: Users can UPDATE their own row (auth.uid() = id), Admins can UPDATE all rows
+-- 2. UPDATE: Users can UPDATE their own contact info, Admins can update all fields
 create policy "Users can update their own profile or admins update all"
     on public.profiles for update
     using (auth.uid() = id or is_admin())
