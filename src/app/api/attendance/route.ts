@@ -34,12 +34,19 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const date = searchParams.get('date');
+  const from = searchParams.get('from');
+  const to = searchParams.get('to');
   const userId = searchParams.get('userId');
   const department = searchParams.get('department');
 
-  // Attendance records (date / userId filters applied server-side).
+  // Attendance records (date range / userId filters applied server-side).
   let query = supabase.from('attendance').select('*').order('date', { ascending: false });
-  if (date) query = query.eq('date', date);
+  if (date) {
+    query = query.eq('date', date);
+  } else {
+    if (from) query = query.gte('date', from);
+    if (to) query = query.lte('date', to);
+  }
   if (userId) query = query.eq('user_id', userId);
 
   const { data: attendance, error } = await query;

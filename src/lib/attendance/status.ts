@@ -25,10 +25,16 @@ export const ATTENDANCE_STATUSES: AttendanceStatus[] = [
 ];
 
 /**
- * Check-in at or after this hour (local time) is treated as a half day.
+ * Worked fewer than this many hours (and checked in/out) counts as a half day.
  * Simple, explicit threshold — do not over-engineer.
  */
-export const HALF_DAY_CHECK_IN_HOUR = 11;
+export const MIN_WORK_HOURS_FOR_FULL_DAY = 4;
+
+/**
+ * Check-in at or after this hour (local time) also counts as a half day
+ * (late arrival). Simple, explicit threshold.
+ */
+export const LATE_CHECK_IN_HOUR = 11;
 
 export interface AttendanceStatusInput {
   checkIn: string | null;
@@ -39,17 +45,27 @@ export interface AttendanceStatusInput {
   source?: AttendanceSource;
 }
 
+/** Hours worked between check-in and check-out, or null if incomplete. */
+export function computeWorkedHours(
+  checkIn: string | null,
+  checkOut: string | null
+): number | null {
+  if (!checkIn || !checkOut) return null;
+  const ms = new Date(checkOut).getTime() - new Date(checkIn).getTime();
+  if (ms < 0) return 0;
+  return ms / (1000 * 60 * 60);
+}
+
 /**
  * Derive the attendance status for a single record from its check-in/out data.
  *
  * Rules:
  *  - LEAVE is never touched (reserved for Phase 4 writes, source = 'leave_sync').
  *  - No check-in                       -> ABSENT
- *  - Check-in present, no check-out    -> HALF_DAY  (incomplete day)
- *  - Check-in present, checked out,
- *    but checked in >= 11:00           -> HALF_DAY  (late arrival)
- *  - Check-in present, checked out,
- *    before 11:00                      -> PRESENT
+ *  - Check-in present, no check-out    -> HALF_DAY  (forgot to check out: flagged)
+ *  - Check-in + check-out, worked < 4h -> HALF_DAY  (left early)
+ *  - Check-in >= 11:00 (late arrival)  -> HALF_DAY
+ *  - Otherwise                         -> PRESENT
  *
  * Idempotent: re-running it on an already-persisted record returns the same
  * status, and it correctly reflects a "live" half-day for a not-yet-checked-out
@@ -65,12 +81,18 @@ export function deriveAttendanceStatus(record: AttendanceStatusInput): Attendanc
     return 'absent';
   }
 
+  // Forgot to check out (or not yet) -> flagged as half day on read.
   if (!record.checkOut) {
     return 'half_day';
   }
 
+  const worked = computeWorkedHours(record.checkIn, record.checkOut);
+  if (worked !== null && worked < MIN_WORK_HOURS_FOR_FULL_DAY) {
+    return 'half_day';
+  }
+
   const checkInHour = new Date(record.checkIn).getHours();
-  if (checkInHour >= HALF_DAY_CHECK_IN_HOUR) {
+  if (checkInHour >= LATE_CHECK_IN_HOUR) {
     return 'half_day';
   }
 

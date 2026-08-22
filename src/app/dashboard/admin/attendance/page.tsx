@@ -7,36 +7,50 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { useEmployees } from '@/hooks/useEmployees';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
-import { toDateStr, type AttendanceStatus } from '@/lib/attendance/status';
+import { toDateStr, getWeekRange, type AttendanceStatus } from '@/lib/attendance/status';
 import { AdminAttendanceTable, type AdminAttendanceRow } from '@/components/dashboard/AdminAttendanceTable';
 
 function buildDemoRows(
-  date: string,
+  from: string,
+  to: string,
   employees: { id: string; fullName: string; employeeId: string; department: string }[]
 ): AdminAttendanceRow[] {
   const statuses: AttendanceStatus[] = ['present', 'half_day', 'absent', 'leave', 'present', 'present'];
-  return employees.map((emp, i) => {
-    const status = statuses[i % statuses.length];
-    const hasIn = status === 'present' || status === 'half_day';
-    const hasOut = status === 'present';
-    return {
-      id: 'demo-' + emp.id + '-' + date,
-      user_id: emp.id,
-      date,
-      check_in: hasIn ? `${date}T09:${i % 9}0:00` : null,
-      check_out: hasOut ? `${date}T18:00:00` : null,
-      status,
-      source: status === 'leave' ? 'leave_sync' : 'auto',
-      profile: { full_name: emp.fullName, employee_id: emp.employeeId, department: emp.department, designation: '' },
-    };
-  });
+  const rows: AdminAttendanceRow[] = [];
+  const cursor = new Date(from + 'T00:00:00');
+  const last = new Date(to + 'T00:00:00');
+  let dayIdx = 0;
+
+  while (cursor <= last) {
+    const ds = toDateStr(cursor);
+    employees.forEach((emp, i) => {
+      const status = statuses[(i + dayIdx) % statuses.length];
+      const hasIn = status === 'present' || status === 'half_day';
+      const hasOut = status === 'present';
+      rows.push({
+        id: 'demo-' + emp.id + '-' + ds,
+        user_id: emp.id,
+        date: ds,
+        check_in: hasIn ? `${ds}T09:${i % 9}0:00` : null,
+        check_out: hasOut ? `${ds}T18:00:00` : null,
+        status,
+        source: status === 'leave' ? 'leave_sync' : 'auto',
+        profile: { full_name: emp.fullName, employee_id: emp.employeeId, department: emp.department, designation: '' },
+      });
+    });
+    cursor.setDate(cursor.getDate() + 1);
+    dayIdx++;
+  }
+  return rows;
 }
 
 export default function AdminAttendancePage() {
   const { employees, isLoading: empLoading } = useEmployees();
   const configured = isSupabaseConfigured();
 
-  const [date, setDate] = useState<string>(toDateStr(new Date()));
+  const week = useMemo(() => getWeekRange(), []);
+  const [fromDate, setFromDate] = useState<string>(week.start);
+  const [toDate, setToDate] = useState<string>(week.end);
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('ALL');
   const [rows, setRows] = useState<AdminAttendanceRow[]>([]);
@@ -54,14 +68,15 @@ export default function AdminAttendancePage() {
     setError(null);
 
     if (!configured) {
-      setRows(buildDemoRows(date, employees));
+      setRows(buildDemoRows(fromDate, toDate, employees));
       setIsLoading(false);
       return;
     }
 
     try {
       const params = new URLSearchParams();
-      if (date) params.set('date', date);
+      if (fromDate) params.set('from', fromDate);
+      if (toDate) params.set('to', toDate);
       const res = await fetch(`/api/attendance?${params.toString()}`, { method: 'GET' });
       const json = await res.json();
       if (!res.ok) {
@@ -75,7 +90,7 @@ export default function AdminAttendancePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [configured, date, employees]);
+  }, [configured, fromDate, toDate, employees]);
 
   useEffect(() => {
     load();
@@ -119,11 +134,18 @@ export default function AdminAttendancePage() {
       {/* Filter bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold uppercase tracking-wider text-surface-600">Date</label>
+          <label className="text-xs font-semibold uppercase tracking-wider text-surface-600">From</label>
           <input
             type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="text-xs sm:text-sm py-2 px-3 rounded-xl border border-surface-200 bg-white text-surface-700 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-subtle"
+          />
+          <label className="text-xs font-semibold uppercase tracking-wider text-surface-600">To</label>
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
             className="text-xs sm:text-sm py-2 px-3 rounded-xl border border-surface-200 bg-white text-surface-700 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-subtle"
           />
         </div>
