@@ -2,7 +2,7 @@
 -- DAYFLOW HRMS — Initial Database Schema & RLS Policies (Phase 1)
 -- ==============================================================================
 
--- Enable UUID extension if not already enabled
+-- Enable UUID extension
 create extension if not exists "pgcrypto";
 
 -- ==============================================================================
@@ -138,7 +138,7 @@ alter table public.attendance enable row level security;
 alter table public.leave_requests enable row level security;
 alter table public.payroll enable row level security;
 
--- Helper function: Check if current user is admin
+-- Helper function: Check if current authenticated user is an admin
 create or replace function public.is_admin()
 returns boolean as $$
 begin
@@ -149,25 +149,39 @@ begin
 end;
 $$ language plpgsql security definer stable;
 
--- PROFILES POLICIES
-create policy "Users can view their own profile"
+-- Drop old policies if existing to avoid conflict on re-runs
+drop policy if exists "Users can view their own profile or admins view all" on public.profiles;
+drop policy if exists "Users can update their own profile or admins update all" on public.profiles;
+drop policy if exists "Users can insert their own profile or admins insert all" on public.profiles;
+drop policy if exists "Admins can delete profiles" on public.profiles;
+
+-- PROFILES RLS POLICIES
+-- 1. SELECT: Users can SELECT their own row (auth.uid() = id), Admins can SELECT all rows
+create policy "Users can view their own profile or admins view all"
     on public.profiles for select
     using (auth.uid() = id or is_admin());
 
-create policy "Users can update their own profile"
+-- 2. UPDATE: Users can UPDATE their own row (auth.uid() = id), Admins can UPDATE all rows
+create policy "Users can update their own profile or admins update all"
     on public.profiles for update
     using (auth.uid() = id or is_admin())
     with check (auth.uid() = id or is_admin());
 
-create policy "Admins can insert profiles"
+-- 3. INSERT: Users creating their own profile (id = auth.uid()) or admins creating any profile
+create policy "Users can insert their own profile or admins insert all"
     on public.profiles for insert
     with check (auth.uid() = id or is_admin());
 
+-- 4. DELETE: Only admins can delete profiles
 create policy "Admins can delete profiles"
     on public.profiles for delete
     using (is_admin());
 
--- ATTENDANCE POLICIES
+-- ATTENDANCE RLS POLICIES
+drop policy if exists "Users can view own attendance or admin can view all" on public.attendance;
+drop policy if exists "Users can record own attendance or admin manage" on public.attendance;
+drop policy if exists "Admins can update attendance" on public.attendance;
+
 create policy "Users can view own attendance or admin can view all"
     on public.attendance for select
     using (auth.uid() = user_id or is_admin());
@@ -180,7 +194,11 @@ create policy "Admins can update attendance"
     on public.attendance for update
     using (is_admin());
 
--- LEAVE REQUESTS POLICIES
+-- LEAVE REQUESTS RLS POLICIES
+drop policy if exists "Users can view own leave requests or admin view all" on public.leave_requests;
+drop policy if exists "Users can create own leave requests" on public.leave_requests;
+drop policy if exists "Admins can update leave requests" on public.leave_requests;
+
 create policy "Users can view own leave requests or admin view all"
     on public.leave_requests for select
     using (auth.uid() = user_id or is_admin());
@@ -193,7 +211,10 @@ create policy "Admins can update leave requests"
     on public.leave_requests for update
     using (is_admin());
 
--- PAYROLL POLICIES
+-- PAYROLL RLS POLICIES
+drop policy if exists "Users can view own payroll or admin view all" on public.payroll;
+drop policy if exists "Only admins can manage payroll" on public.payroll;
+
 create policy "Users can view own payroll or admin view all"
     on public.payroll for select
     using (auth.uid() = user_id or is_admin());
