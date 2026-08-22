@@ -43,7 +43,7 @@ Verification notes:
 
 ## Leave Phase 4
 
-Apply `supabase/migrations/0003_leave_workflow.sql` after the attendance migration. Employees use `/employee/leave` to submit and track `PAID`, `SICK`, or `UNPAID` requests. Admins use `/admin/leave` to approve or reject pending requests. The database function `decide_leave_request` enforces the terminal state machine and performs approval, `LEAVE_SYNC` attendance upserts for every date, and employee notification creation in one transaction.
+Apply `supabase/migrations/0003_leave_workflow.sql` after the attendance migration, including on the already-deployed Supabase project. Employees use `/employee/leave` to submit and track `PAID`, `SICK`, or `UNPAID` requests. Admins use `/admin/leave` to approve or reject pending requests. The database function `decide_leave_request` enforces the terminal state machine and performs approval, `LEAVE_SYNC` attendance upserts for every date, and employee notification creation in one transaction.
 
 Verification guarantees:
 

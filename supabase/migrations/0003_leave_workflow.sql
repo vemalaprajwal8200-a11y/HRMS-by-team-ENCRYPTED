@@ -3,6 +3,22 @@ alter table public.leave_requests
   add column if not exists admin_comment text,
   add column if not exists reviewed_at timestamptz;
 
+do $$
+declare
+  constraint_name text;
+begin
+  for constraint_name in
+    select conname
+    from pg_constraint
+    where conrelid = 'public.leave_requests'::regclass
+      and contype = 'c'
+      and (pg_get_constraintdef(oid) ilike '%status%' or pg_get_constraintdef(oid) ilike '%type%')
+  loop
+    execute format('alter table public.leave_requests drop constraint %I', constraint_name);
+  end loop;
+end;
+$$;
+
 alter table public.leave_requests
   drop constraint if exists leave_requests_status_check;
 update public.leave_requests set status = upper(status);

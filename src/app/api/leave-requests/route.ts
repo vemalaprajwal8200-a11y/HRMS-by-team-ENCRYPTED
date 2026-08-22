@@ -7,7 +7,10 @@ export async function GET() {
   let query = auth.supabase.from('leave_requests').select('*').eq('user_id', auth.user.id).order('created_at', { ascending: false });
   if (auth.role === 'admin') query = auth.supabase.from('leave_requests').select('*, profiles!inner(full_name, employee_id)').order('status', { ascending: true }).order('created_at', { ascending: false });
   const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  if (error) {
+    const staleSchema = error.message.includes('leave_requests_status_check');
+    return NextResponse.json({ error: staleSchema ? 'The database needs the Phase 4 migration. Apply supabase/migrations/0003_leave_workflow.sql, then try again.' : error.message }, { status: 400 });
+  }
   return NextResponse.json({ requests: data ?? [] });
 }
 
