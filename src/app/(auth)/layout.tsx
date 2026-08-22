@@ -3,9 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Building2, Sparkles, ShieldCheck } from 'lucide-react';
+import { Building2, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TiltCard } from '@/components/auth/TiltCard';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -54,29 +53,32 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </motion.div>
 
       {/* ========================================================================= */}
-      {/* 3D TILT GLASS CARD SHELL */}
+      {/* FROSTED GLASS CARD SHELL (STATIC) */}
       {/* ========================================================================= */}
-      <div className="relative z-20 w-full max-w-[460px]">
-        <TiltCard maxTilt={6}>
-          <div className="relative rounded-3xl bg-white/80 backdrop-blur-2xl border border-white/80 shadow-[0_20px_70px_-15px_rgba(79,70,229,0.18)] p-7 sm:p-9 ring-1 ring-black/[0.04] overflow-hidden">
-            {/* Top decorative gradient border line */}
-            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="relative z-20 w-full max-w-[460px]"
+      >
+        <div className="relative rounded-3xl bg-white/80 backdrop-blur-2xl border border-white/80 shadow-[0_20px_70px_-15px_rgba(79,70,229,0.18)] p-7 sm:p-9 ring-1 ring-black/[0.04] overflow-hidden">
+          {/* Top decorative gradient border line */}
+          <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
 
-            {/* Inner dynamic content with route transition */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={pathname}
-                initial={{ opacity: 0, y: 14, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -14, scale: 0.98 }}
-                transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-                className="w-full"
-              >
-                {children}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </TiltCard>
+          {/* Inner dynamic content with route transition */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 14, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -14, scale: 0.98 }}
+              transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+              className="w-full"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
         {/* ========================================================================= */}
         {/* FOOTER TRUST BADGE */}
@@ -95,7 +97,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             Dayflow Human Resource Management System • Odoo x NMIT Hackathon
           </p>
         </motion.div>
-      </div>
+      </motion.div>
     </div>
   );
 }
