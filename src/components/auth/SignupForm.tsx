@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { SignupFormData, SignupFormErrors } from '@/types/auth';
 import { UserRole } from '@/types/database';
+import { isValidPassword } from '@/lib/auth/password';
 
 export function SignupForm() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export function SignupForm() {
   // Real-time password criteria validation
   const passwordHasMinLen = formData.password.length >= 8;
   const passwordHasNumber = /\d/.test(formData.password);
-  const passwordHasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password);
+  const passwordHasUppercase = /[A-Z]/.test(formData.password);
   const passwordsMatch = formData.password.length > 0 && formData.password === formData.confirmPassword;
 
   const validate = (): boolean => {
@@ -61,8 +62,8 @@ export function SignupForm() {
       newErrors.password = 'Password must be at least 8 characters long';
     } else if (!passwordHasNumber) {
       newErrors.password = 'Password must include at least 1 number';
-    } else if (!passwordHasSpecial) {
-      newErrors.password = 'Password must include at least 1 special character';
+    } else if (!isValidPassword(formData.password)) {
+      newErrors.password = 'Password must include at least 1 uppercase letter';
     }
 
     if (!formData.confirmPassword) {
@@ -213,8 +214,8 @@ export function SignupForm() {
             <span className={`flex items-center gap-1 ${passwordHasNumber ? 'text-emerald-600 font-medium' : 'text-surface-400'}`}>
               <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> 1+ number
             </span>
-            <span className={`flex items-center gap-1 ${passwordHasSpecial ? 'text-emerald-600 font-medium' : 'text-surface-400'}`}>
-              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> 1+ special char
+            <span className={`flex items-center gap-1 ${passwordHasUppercase ? 'text-emerald-600 font-medium' : 'text-surface-400'}`}>
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> 1+ uppercase
             </span>
           </div>
         </div>

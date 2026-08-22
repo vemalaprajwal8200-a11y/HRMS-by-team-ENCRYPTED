@@ -143,16 +143,16 @@ console.log('\n📦 3. Testing Password & Form Validation Rules');
 const validatePassword = (pwd: string) => {
   const minLen = pwd.length >= 8;
   const hasNum = /\d/.test(pwd);
-  const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd);
-  return minLen && hasNum && hasSpecial;
+  const hasUppercase = /[A-Z]/.test(pwd);
+  return minLen && hasNum && hasUppercase;
 };
 
 // Password criteria checks
 assert(!validatePassword('short1!'), 'Reject password < 8 chars');
 assert(!validatePassword('AllLettersOnly!'), 'Reject password without number');
-assert(!validatePassword('AllLetters12345'), 'Reject password without special character');
-assert(validatePassword('StrongPass123!'), 'Accept valid complex password');
-assert(validatePassword('Hackathon@2026'), 'Accept hackathon theme password');
+assert(!validatePassword('allletters12345'), 'Reject password without uppercase letter');
+assert(validatePassword('StrongPass123'), 'Accept valid password with uppercase and number');
+assert(validatePassword('Hackathon2026'), 'Accept hackathon theme password');
 
 // Email regex checks
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

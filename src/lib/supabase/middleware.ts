@@ -67,8 +67,8 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isAuthPage = path.startsWith('/signin') || path.startsWith('/signup') || path.startsWith('/verify-email');
-  const isDashboard = path.startsWith('/dashboard');
-  const isAdminDashboard = path.startsWith('/dashboard/admin');
+  const isDashboard = path.startsWith('/dashboard') || path.startsWith('/employee') || path.startsWith('/admin');
+  const isAdminDashboard = path.startsWith('/dashboard/admin') || path.startsWith('/admin');
 
   // 1. Unauthenticated users trying to access protected dashboard routes
   if (!user && isDashboard) {

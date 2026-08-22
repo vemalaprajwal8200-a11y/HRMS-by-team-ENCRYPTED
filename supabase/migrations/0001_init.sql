@@ -6,7 +6,21 @@
 create extension if not exists "pgcrypto";
 
 -- ==============================================================================
--- 1. PROFILES TABLE
+-- 1. USERS TABLE (Phase 1 foundation)
+-- Supabase owns authentication credentials in auth.users. This public table keeps
+-- the application-level identity and role fields available to later phases.
+-- ==============================================================================
+create table if not exists public.users (
+    id uuid primary key references auth.users(id) on delete cascade,
+    employee_id text unique not null,
+    email text unique not null,
+    role text not null check (role in ('employee', 'admin')) default 'employee',
+    email_verified boolean not null default false,
+    created_at timestamptz not null default now()
+);
+
+-- ==============================================================================
+-- 2. PROFILES TABLE
 -- ==============================================================================
 create table if not exists public.profiles (
     id uuid primary key references auth.users(id) on delete cascade,
@@ -29,7 +43,7 @@ create table if not exists public.profiles (
 );
 
 -- ==============================================================================
--- 2. ATTENDANCE TABLE (Phase 3 Stub)
+-- 3. ATTENDANCE TABLE (Phase 3 Stub)
 -- ==============================================================================
 create table if not exists public.attendance (
     id uuid primary key default gen_random_uuid(),
@@ -42,7 +56,7 @@ create table if not exists public.attendance (
 );
 
 -- ==============================================================================
--- 3. LEAVE REQUESTS TABLE (Phase 4 Stub)
+-- 4. LEAVE REQUESTS TABLE (Phase 4 Stub)
 -- ==============================================================================
 create table if not exists public.leave_requests (
     id uuid primary key default gen_random_uuid(),
@@ -58,7 +72,7 @@ create table if not exists public.leave_requests (
 );
 
 -- ==============================================================================
--- 4. PAYROLL TABLE (Phase 5 Stub)
+-- 5. PAYROLL TABLE (Phase 5 Stub)
 -- ==============================================================================
 create table if not exists public.payroll (
     id uuid primary key default gen_random_uuid(),
@@ -73,7 +87,7 @@ create table if not exists public.payroll (
 );
 
 -- ==============================================================================
--- 5. TRIGGER: Sync auth.users to public.profiles on Signup
+-- 6. TRIGGERS: Sync auth.users to public.users and public.profiles
 -- ==============================================================================
 create or replace function public.handle_new_user()
 returns trigger as $$
@@ -86,6 +100,14 @@ begin
     _employee_id := coalesce(new.raw_user_meta_data->>'employee_id', 'EMP-' || upper(substring(new.id::text, 1, 6)));
     _full_name := coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1));
     _role := coalesce(new.raw_user_meta_data->>'role', 'employee');
+
+    insert into public.users (id, employee_id, email, role, email_verified)
+    values (new.id, _employee_id, new.email, _role, new.email_confirmed_at is not null)
+    on conflict (id) do update set
+        email = excluded.email,
+        employee_id = excluded.employee_id,
+        role = excluded.role,
+        email_verified = excluded.email_verified;
 
     insert into public.profiles (
         id,
@@ -130,10 +152,27 @@ create trigger on_auth_user_created
     after insert on auth.users
     for each row execute function public.handle_new_user();
 
+create or replace function public.handle_user_verification()
+returns trigger as $$
+begin
+    update public.users
+    set email = new.email,
+        email_verified = new.email_confirmed_at is not null
+    where id = new.id;
+    return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists on_auth_user_updated on auth.users;
+create trigger on_auth_user_updated
+    after update of email, email_confirmed_at on auth.users
+    for each row execute function public.handle_user_verification();
+
 -- ==============================================================================
 -- 6. ROW LEVEL SECURITY (RLS) POLICIES
 -- ==============================================================================
 alter table public.profiles enable row level security;
+alter table public.users enable row level security;
 alter table public.attendance enable row level security;
 alter table public.leave_requests enable row level security;
 alter table public.payroll enable row level security;
@@ -176,6 +215,12 @@ create policy "Users can insert their own profile or admins insert all"
 create policy "Admins can delete profiles"
     on public.profiles for delete
     using (is_admin());
+
+-- USERS RLS POLICIES: expose identity to the owner and role-aware admins only.
+drop policy if exists "Users can view own identity or admins view all" on public.users;
+create policy "Users can view own identity or admins view all"
+    on public.users for select
+    using (auth.uid() = id or is_admin());
 
 -- ATTENDANCE RLS POLICIES
 drop policy if exists "Users can view own attendance or admin can view all" on public.attendance;

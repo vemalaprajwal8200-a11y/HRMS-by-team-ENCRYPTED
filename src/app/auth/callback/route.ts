@@ -4,10 +4,12 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
+  const tokenHash = searchParams.get('token_hash');
+  const verificationType = searchParams.get('type');
   const next = searchParams.get('next') ?? '/dashboard/employee';
+  const supabase = createClient();
 
   if (code) {
-    const supabase = createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
@@ -26,6 +28,14 @@ export async function GET(request: Request) {
       }
 
       return NextResponse.redirect(`${origin}${next}`);
+    }
+  }
+
+  // Supabase confirmation templates may send token_hash instead of an auth code.
+  if (tokenHash && verificationType === 'email') {
+    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'email' });
+    if (!error) {
+      return NextResponse.redirect(`${origin}/signin?verified=1`);
     }
   }
 

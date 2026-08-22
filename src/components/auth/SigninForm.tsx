@@ -68,10 +68,8 @@ export function SigninForm() {
         const errorMsg = result.error.message.toLowerCase();
         if (errorMsg.includes('invalid login credentials') || errorMsg.includes('wrong password') || errorMsg.includes('invalid credentials')) {
           setErrors({ general: 'Invalid email or password. Please verify your credentials.' });
-        } else if (errorMsg.includes('user not found') || errorMsg.includes('no user')) {
-          setErrors({ general: 'No registered user found with this email address.' });
         } else {
-          setErrors({ general: result.error.message });
+          setErrors({ general: 'Invalid email or password. Please verify your credentials.' });
         }
         setIsSubmitting(false);
         return;
