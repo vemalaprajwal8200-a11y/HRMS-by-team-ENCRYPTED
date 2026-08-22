@@ -10,8 +10,7 @@ export type UserRole = 'employee' | 'admin';
 
 export interface Database {
   public: {
-    Tables: {
-      profiles: {
+    Tables: {      profiles: {
         Row: {
           id: string;
           employee_id: string;
@@ -25,6 +24,7 @@ export interface Database {
           department: string | null;
           date_of_joining: string | null;
           employment_type: string | null;
+          documents: Json | null;
           base_salary: number | null;
           allowances: number | null;
           deductions: number | null;
@@ -44,6 +44,7 @@ export interface Database {
           department?: string | null;
           date_of_joining?: string | null;
           employment_type?: string | null;
+          documents?: Json | null;
           base_salary?: number | null;
           allowances?: number | null;
           deductions?: number | null;
@@ -63,12 +64,14 @@ export interface Database {
           department?: string | null;
           date_of_joining?: string | null;
           employment_type?: string | null;
+          documents?: Json | null;
           base_salary?: number | null;
           allowances?: number | null;
           deductions?: number | null;
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [],
       };
       attendance: {
         Row: {
@@ -98,6 +101,7 @@ export interface Database {
           status?: 'present' | 'absent' | 'half-day' | 'leave';
           created_at?: string;
         };
+        Relationships: [],
       };
       leave_requests: {
         Row: {
@@ -136,6 +140,7 @@ export interface Database {
           comments?: string | null;
           created_at?: string;
         };
+        Relationships: [],
       };
       payroll: {
         Row: {
@@ -171,7 +176,10 @@ export interface Database {
           status?: 'draft' | 'processed' | 'paid';
           created_at?: string;
         };
+        Relationships: [],
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
   };
 }

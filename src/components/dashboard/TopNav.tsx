@@ -38,7 +38,7 @@ export function TopNav() {
   const navLinks = isAdmin
     ? [
         { label: 'Admin Overview', href: '/dashboard/admin', icon: LayoutDashboard },
-        { label: 'Team Directory', href: '/dashboard/admin#employees', icon: Users },
+        { label: 'Employee Directory', href: '/dashboard/admin/employees', icon: Users },
       ]
     : [
         { label: 'Dashboard', href: '/dashboard/employee', icon: LayoutDashboard },

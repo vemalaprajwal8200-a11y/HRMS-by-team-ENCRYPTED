@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   Users,
@@ -11,12 +12,14 @@ import {
   TrendingUp,
   FileCheck,
   UserCheck,
+  ArrowRight,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useEmployees } from '@/hooks/useEmployees';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { EmployeeTable } from '@/components/dashboard/EmployeeTable';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 
 export default function AdminDashboardPage() {
@@ -119,19 +122,25 @@ export default function AdminDashboardPage() {
 
       {/* Employee List Table */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="text-base font-bold text-surface-900">
-              Employee Directory
+              Employee Snapshot
             </h2>
             <p className="text-xs text-surface-500">
-              View employee records, department assignments, and access levels
+              Recently added team members — open the full directory for search
+              and department filters
             </p>
           </div>
+          <Link href="/dashboard/admin/employees">
+            <Button variant="outline" size="sm" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
+              Open Full Directory
+            </Button>
+          </Link>
         </div>
 
         <EmployeeTable
-          employees={employees}
+          employees={employees.slice(0, 6)}
           isLoading={employeesLoading}
         />
       </div>

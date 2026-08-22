@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { formatCurrency, formatDate, getInitials, cn } from '../src/lib/utils';
 import { formatProfileRow, ProfileRow } from '../src/types/profile';
+import { enforceAllowlist } from '../src/lib/api/profile-validation';
 
 // Auto-load .env.local if running standalone script
 const envPath = path.resolve(process.cwd(), '.env.local');
@@ -85,6 +86,9 @@ const standardRow: ProfileRow = {
   department: 'Platform',
   date_of_joining: '2024-01-10',
   employment_type: 'Full-time',
+  documents: [
+    { id: 'doc-1', name: 'Offer Letter.pdf', url: 'https://example.com/offer.pdf' },
+  ],
   base_salary: 100000,
   allowances: 30000,
   deductions: 15000,
@@ -111,6 +115,7 @@ const nullSalaryRow: ProfileRow = {
   department: null,
   date_of_joining: null,
   employment_type: null,
+  documents: null,
   base_salary: null,
   allowances: null,
   deductions: null,
@@ -124,6 +129,23 @@ assert(formattedNullRow.salaryStructure.netSalary === 0, 'formatProfileRow null 
 assert(formattedNullRow.phone === 'Not provided', 'formatProfileRow null phone fallback string');
 assert(formattedNullRow.address === 'Not provided', 'formatProfileRow null address fallback string');
 assert(formattedNullRow.designation === 'Software Engineer', 'formatProfileRow null designation defaults sensibly');
+
+// Phase 2: Documents jsonb parsing
+assert(formatted.documents.length === 1, 'formatProfileRow parses valid documents array');
+assert(formatted.documents[0].name === 'Offer Letter.pdf', 'formatProfileRow preserves document name');
+assert(formattedNullRow.documents.length === 0, 'formatProfileRow null documents defaults to empty array');
+const messyDocsRow: ProfileRow = {
+  ...standardRow,
+  documents: [
+    { name: 'Valid Doc', url: 'https://example.com/a.pdf' },
+    'not-an-object',
+    42,
+    { url: 'missing-name' },
+    { name: 'No URL', url: 123 },
+  ],
+};
+const messyDocsFormatted = formatProfileRow(messyDocsRow);
+assert(messyDocsFormatted.documents.length === 1, 'formatProfileRow drops malformed document entries');
 
 // Edge Case: Deductions exceed base + allowances (ensure net salary is never negative)
 const highDeductionsRow: ProfileRow = {
@@ -171,9 +193,89 @@ assert(!validateEmpId('  '), 'Reject whitespace-only employee ID');
 assert(!validateEmpId('E1'), 'Reject employee ID < 3 chars');
 
 // -----------------------------------------------------------------------------
-// 4. SUPABASE CONFIGURATION DETECTION
+// 4. PROFILE EDIT PERMISSION BOUNDARIES (server-side allowlist — Phase 2)
 // -----------------------------------------------------------------------------
-console.log('\n📦 4. Testing Supabase Environment & Config Detection');
+console.log('\n📦 4. Testing Profile Edit Permission Boundaries (server allowlist)');
+
+// EMPLOYEE self-edit: only phone / address / photo_url may pass.
+const empAllowed = enforceAllowlist(
+  { phone: '+91 98765 43210', address: 'New addr', photo_url: '' },
+  'employee'
+);
+assert(empAllowed.ok === true, 'Employee PATCH with allowed fields is accepted');
+assert(
+  (empAllowed.payload?.phone as string) === '+91 98765 43210',
+  'Employee PATCH normalizes phone value'
+);
+
+const empPrivilegeEscalation = enforceAllowlist(
+  { phone: '+91 1', designation: 'CTO', department: 'C-Suite', base_salary: 999999 },
+  'employee'
+);
+assert(
+  empPrivilegeEscalation.ok === false &&
+    empPrivilegeEscalation.response?.status === 403,
+  'Employee PATCH with restricted fields (designation/department/salary) is REJECTED with 403'
+);
+
+const empRoleGrab = enforceAllowlist(
+  { phone: '+91 1', role: 'admin', employee_id: 'EMP-0000' },
+  'employee'
+);
+assert(
+  empRoleGrab.ok === false && empRoleGrab.response?.status === 403,
+  'Employee PATCH attempting role/employee_id escalation is REJECTED with 403'
+);
+
+// ADMIN edit: all HR-managed fields allowed…
+const adminFull = enforceAllowlist(
+  {
+    full_name: 'Renamed Person',
+    designation: 'Senior Engineer',
+    department: 'Platform',
+    date_of_joining: '2024-02-01',
+    employment_type: 'Contract',
+    phone: '+91 90000 00000',
+    documents: [{ name: 'ID', url: 'https://example.com/id.pdf' }],
+  },
+  'admin'
+);
+assert(adminFull.ok === true, 'Admin PATCH with all HR fields is accepted');
+
+// …but identity and payroll-owned fields are still rejected for admins too.
+const adminForbidden = enforceAllowlist(
+  { full_name: 'X', role: 'admin', email: 'a@b.co', base_salary: 1, allowances: 2 },
+  'admin'
+);
+assert(
+  adminForbidden.ok === false && adminForbidden.response?.status === 403,
+  'Admin PATCH on role/email/salary fields is REJECTED with 403 (payroll & identity are out of scope)'
+);
+
+// Validation quality gates (apply to both roles).
+const badDate = enforceAllowlist({ date_of_joining: 'not-a-date' }, 'admin');
+assert(
+  badDate.ok === false && badDate.response?.status === 400,
+  'Malformed date_of_joining is rejected with 400'
+);
+const badDoc = enforceAllowlist(
+  { documents: [{ name: 'x', url: 'javascript:alert(1)' }] },
+  'admin'
+);
+assert(
+  badDoc.ok === false && badDoc.response?.status === 400,
+  'Non-http(s) document URL is rejected with 400'
+);
+const emptyPatch = enforceAllowlist({}, 'employee');
+assert(
+  emptyPatch.ok === false && emptyPatch.response?.status === 400,
+  'Empty PATCH payload is rejected with 400'
+);
+
+// -----------------------------------------------------------------------------
+// 5. SUPABASE CONFIGURATION DETECTION
+// -----------------------------------------------------------------------------
+console.log('\n📦 5. Testing Supabase Environment & Config Detection');
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

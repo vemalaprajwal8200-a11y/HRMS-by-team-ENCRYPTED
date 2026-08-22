@@ -1,19 +1,52 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { useEmployeeProfile } from '@/hooks/useEmployees';
 import { ProfileView } from '@/components/profile/ProfileView';
 import { ProfileSkeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
+import {
+  fetchEmployeeProfile,
+  ApiError,
+} from '@/lib/api/client';
+import type { FormattedProfile } from '@/types/profile';
 
+/**
+ * Admin view/edit of any employee's profile. Data flows through the
+ * admin-only API (/api/profile/[userId]) rather than direct Supabase reads,
+ * so edits are validated by the same server-side allowlist the API enforces.
+ */
 export default function AdminEmployeeProfilePage() {
   const params = useParams();
-  const id = params.id as string;
+  const userId = params.id as string;
 
-  const { profile, isLoading, error } = useEmployeeProfile(id);
+  const [profile, setProfile] = useState<FormattedProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!userId) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetchEmployeeProfile(userId);
+      setProfile(response.profile);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('Failed to load this employee profile.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   if (isLoading) {
     return <ProfileSkeleton />;
@@ -27,9 +60,10 @@ export default function AdminEmployeeProfilePage() {
         </div>
         <h2 className="text-lg font-bold text-surface-900">Employee Not Found</h2>
         <p className="text-xs text-surface-500">
-          The requested employee record could not be retrieved from the database.
+          {error ||
+            'The requested employee record could not be retrieved from the database.'}
         </p>
-        <Link href="/dashboard/admin">
+        <Link href="/dashboard/admin/employees">
           <Button variant="outline" leftIcon={<ArrowLeft className="w-4 h-4" />}>
             Back to Directory
           </Button>
@@ -41,8 +75,10 @@ export default function AdminEmployeeProfilePage() {
   return (
     <ProfileView
       profile={profile}
-      backHref="/dashboard/admin"
+      mode="admin-edit"
+      backHref="/dashboard/admin/employees"
       backLabel="Back to Employee Directory"
+      onSaved={(updated) => setProfile(updated)}
     />
   );
 }
